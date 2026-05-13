@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { DiscoveryFeedItem } from './discovery-feed';
 import type {
   AdminStats,
@@ -10,7 +11,7 @@ import type {
 } from './app-types';
 import { AdminAction, StatCard, TaskProgressBar } from './ui-primitives';
 
-export function InventoryTab({
+export const InventoryTab = memo(function InventoryTab({
   searchQuery,
   onSearchQueryChange,
   filteredInventory,
@@ -67,9 +68,9 @@ export function InventoryTab({
       </div>
     </div>
   );
-}
+});
 
-export function MegaMindsTab({
+export const MegaMindsTab = memo(function MegaMindsTab({
   megaMindItems,
   renderEmojis,
   tierBadge,
@@ -145,9 +146,9 @@ export function MegaMindsTab({
       )}
     </div>
   );
-}
+});
 
-export function TasksTab({
+export const TasksTab = memo(function TasksTab({
   dailyTasks,
   tasksCompleted,
   tasksTotal,
@@ -389,9 +390,9 @@ export function TasksTab({
       <div className="pb-4" />
     </div>
   );
-}
+});
 
-export function LeaderboardTab({
+export const LeaderboardTab = memo(function LeaderboardTab({
   myRank,
   leaderboardData,
   recentDiscoveries,
@@ -501,9 +502,9 @@ export function LeaderboardTab({
       <div className="pb-4" />
     </div>
   );
-}
+});
 
-export function AdminTab({
+export const AdminTab = memo(function AdminTab({
   adminFid,
   adminStats,
   mintingPaused,
@@ -706,4 +707,4 @@ export function AdminTab({
       <div className="pb-4" />
     </div>
   );
-}
+});

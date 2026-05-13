@@ -97,6 +97,7 @@ type ItemTier = "COMMON" | "RARE" | "LEGENDARY";
 type ActivityType = "craft" | "mint" | "gm" | "x40_payment";
 
 // Agent types supported
+export type AgentID = string | number;
 export type AgentType = "farcaster" | "x40" | "ens" | "solana" | string;
 
 type DailyTaskType =
@@ -157,7 +158,6 @@ const STORAGE_KEYS = {
 const MAX_ACTIVITY_ITEMS = 300;
 
 // Exported types for use across the application
-export type { AgentID, AgentType };
 
 const PTS = {
   CRAFT_COMMON: 2,
@@ -411,7 +411,7 @@ async function pushActivity(event: ActivityEvent) {
 }
 
 // Remove old LeaderboardStore type if it existed
-// async function updatePlayer(
+async function updatePlayer(
   agentId: AgentID,
   agentType: AgentType,
   username: string | undefined,
@@ -554,7 +554,7 @@ export async function recordCraft(input: {
   );
 
   await pushActivity({
-    id: activityId("craft", input.agentId, input.agentType),
+    id: activityIdV2("craft", input.agentId, input.agentType),
     type: "craft",
     agentId: player.agentId,
     agentType: player.agentType,
@@ -581,7 +581,7 @@ export async function recordCraft(input: {
 }
 
 // Helper for activity ID with agent type
-function activityId(prefix: ActivityType, agentId: AgentID, agentType: AgentType) {
+function activityIdV2(prefix: ActivityType, agentId: AgentID, agentType: AgentType) {
   const id = normalizeAgentId(agentId, agentType);
   return `${prefix}-${id}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -665,7 +665,7 @@ export async function recordMint(input: {
   );
 
   await pushActivity({
-    id: activityId("mint", input.agentId, input.agentType),
+    id: activityIdV2("mint", input.agentId, input.agentType),
     type: "mint",
     agentId: player.agentId,
     agentType: player.agentType,
@@ -750,7 +750,7 @@ export async function recordGm(input: {
   );
 
   await pushActivity({
-    id: activityId("gm", input.agentId, input.agentType),
+    id: activityIdV2("gm", input.agentId, input.agentType),
     type: "gm",
     agentId: player.agentId,
     agentType: player.agentType,

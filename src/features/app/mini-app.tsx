@@ -449,13 +449,18 @@ export function MiniApp() {
     return () => clearTimeout(t);
   }, [adminFeedback]);
 
-  const megaMindItems = inventory.filter((i) => i.isMegaMind);
-  const filteredInventory = inventory.filter((i) => i.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const megaMindItems = useMemo(() => inventory.filter((i) => i.isMegaMind), [inventory]);
+  const filteredInventory = useMemo(() =>
+    inventory.filter((i) => i.name.toLowerCase().includes(searchQuery.toLowerCase())),
+    [inventory, searchQuery]
+  );
 
   // Daily task completion counts
-  const tasksCompleted = dailyTasks.filter((t) => t.completed).length;
-  const tasksTotal = dailyTasks.length;
-  const tasksPendingClaim = dailyTasks.filter((t) => !t.completed && t.progress >= t.required).length;
+  const { tasksCompleted, tasksTotal, tasksPendingClaim } = useMemo(() => ({
+    tasksCompleted: dailyTasks.filter((t) => t.completed).length,
+    tasksTotal: dailyTasks.length,
+    tasksPendingClaim: dailyTasks.filter((t) => !t.completed && t.progress >= t.required).length,
+  }), [dailyTasks]);
 
   // ── Leaderboard — insert live user at correct position ──────────────────────
   const leaderboardData = useMemo(() => {
@@ -502,14 +507,14 @@ export function MiniApp() {
         ? "Syncing"
         : "Offline";
 
-  function addToCanvas(item: AppInventoryItem) {
+  const addToCanvas = useCallback((item: AppInventoryItem) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const x = 44 + Math.random() * (rect.width - 110);
     const y = 30 + Math.random() * (rect.height - 76);
     setCanvasItems((prev) => [...prev, { instanceId: newId(), id: item.id, name: item.name, emojis: item.emojis, tier: item.tier, isMegaMind: item.isMegaMind, x, y }]);
-  }
+  }, []);
 
   const handlePointerDown = useCallback((e: React.PointerEvent, instanceId: string) => {
     e.preventDefault(); e.stopPropagation();
@@ -687,12 +692,12 @@ export function MiniApp() {
     document.addEventListener('pointerup', onUp);
   }, [canvasItems, mintingPaused, refreshServerSnapshot, syncFromServerPlayer]);
 
-  function startMint(item: AppInventoryItem) {
+  const startMint = useCallback((item: AppInventoryItem) => {
     if (mintingPaused) { setAdminFeedback('Minting is currently paused by admin'); return; }
     setMintModal({ uid: item.uid, name: item.name, emojis: item.emojis, tier: item.tier, phase: 'prompt' });
-  }
+  }, [mintingPaused]);
 
-  function advanceMint() {
+  const advanceMint = useCallback(() => {
     if (!mintModal) return;
     if (mintModal.phase === 'prompt') {
       setMintModal((m) => m ? { ...m, phase: 'connecting' } : null);
@@ -721,10 +726,10 @@ export function MiniApp() {
     } else if (mintModal.phase === 'done') {
       setMintModal(null);
     }
-  }
+  }, [mintModal, refreshServerSnapshot, syncFromServerPlayer]);
 
   // ── GM on-chain handler ───────────────────────────────────────────────────
-  function sendGm() {
+  const sendGm = useCallback(() => {
     if (gmSent || gmSending) return;
     setGmSending(true);
     setTimeout(() => {
@@ -741,11 +746,11 @@ export function MiniApp() {
         syncFromServerPlayer(player);
       });
     }, 1800);
-  }
+  }, [gmSent, gmSending, gmChain, syncFromServerPlayer]);
 
-  function clearCanvas() { setCanvasItems([]); setCombining(null); }
+  const clearCanvas = useCallback(() => { setCanvasItems([]); setCombining(null); }, []);
 
-  function adminAction(msg: string) { setAdminFeedback(msg); }
+  const adminAction = useCallback((msg: string) => { setAdminFeedback(msg); }, []);
 
   const craftzColor = craftz > 49 ? '#22c55e' : craftz > 19 ? '#eab308' : '#ef4444';
   const craftzLow = craftz < CRAFTZ_COST;
