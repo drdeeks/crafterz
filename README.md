@@ -381,22 +381,31 @@ crafterz/
 
 ### Crafting System
 
-The crafting engine uses a **hybrid approach**:
+The crafting engine uses a **recursive, generation-based approach** inspired by games like Little Alchemy and Infinite Craft:
 
 1. **AI Mode** (when `AI_API_KEY` is set):
-   - Two genesis items are sent to the AI with context about already-discovered items
-   - AI returns a logical combination result (name, emojis, tier, description)
+   - Any two items can be combined — genesis or crafted
+   - AI receives generation context (Gen 0 = genesis, Gen 1+ = crafted)
+   - Higher generations produce more complex/abstract results
    - Results are cached for deterministic future combinations
    - First global discovery triggers MegaMind status
 
 2. **Fallback Mode** (no `AI_API_KEY`):
-   - Uses a built-in registry of 25 deterministic recipes
+   - Uses a built-in registry of 25 deterministic recipes (genesis + genesis only)
    - Same combination always produces the same result
-   - No infinite chains — only genesis items can be combined
+   - AI mode required for recursive crafting beyond first generation
 
-**Key constraints:**
-- Only the 7 genesis items (Water, Fire, Earth, Air, Sun, Moon, Time) can be combined
-- Crafted items cannot be used as ingredients (prevents infinite chains)
+**Generation System:**
+- **Generation 0**: Primordial elements (Fire, Water, Earth, Air, Sun, Moon, Time)
+- **Generation 1**: Direct combinations of elements (Steam, Lava, Ice, Mist, etc.)
+- **Generation 2**: Combinations involving Gen 1 items (Steam + Earth = Geyser)
+- **Generation 3+**: Complex merges of crafted items (Geyser + Time = Old Faithful)
+- Each item displays its generation badge (`G1`, `G2`, `G3`, etc.) on the canvas
+
+**Key rules:**
+- Any item can combine with any other item (recursive crafting)
+- Result generation = `max(genA, genB) + 1`
+- Same combination always produces the same result (deterministic cache)
 - MegaMind status is granted only on the first global discovery of an item
 - Emojis are persistently associated with each item
 

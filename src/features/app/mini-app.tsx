@@ -54,13 +54,13 @@ const EVM_CHAINS: EvmChainOption[] = [
 
 // ─── Initial Inventory (7 Genesis elements) ──────────────────────────────────
 const INITIAL_INVENTORY: AppInventoryItem[] = [
-  { uid: 'u-water', id: 'water', name: 'Water', emojis: ['💧'],  tier: 'GENESIS' },
-  { uid: 'u-fire',  id: 'fire',  name: 'Fire',  emojis: ['🔥'],  tier: 'GENESIS' },
-  { uid: 'u-earth', id: 'earth', name: 'Earth', emojis: ['🌍'],  tier: 'GENESIS' },
-  { uid: 'u-air',   id: 'air',   name: 'Air',   emojis: ['💨'],  tier: 'GENESIS' },
-  { uid: 'u-sun',   id: 'sun',   name: 'Sun',   emojis: ['☀️'],  tier: 'GENESIS' },
-  { uid: 'u-moon',  id: 'moon',  name: 'Moon',  emojis: ['🌙'],  tier: 'GENESIS' },
-  { uid: 'u-time',  id: 'time',  name: 'Time',  emojis: ['⏰'],  tier: 'GENESIS' },
+  { uid: 'u-water', id: 'water', name: 'Water', emojis: ['💧'],  tier: 'GENESIS', generation: 0 },
+  { uid: 'u-fire',  id: 'fire',  name: 'Fire',  emojis: ['🔥'],  tier: 'GENESIS', generation: 0 },
+  { uid: 'u-earth', id: 'earth', name: 'Earth', emojis: ['🌍'],  tier: 'GENESIS', generation: 0 },
+  { uid: 'u-air',   id: 'air',   name: 'Air',   emojis: ['💨'],  tier: 'GENESIS', generation: 0 },
+  { uid: 'u-sun',   id: 'sun',   name: 'Sun',   emojis: ['☀️'],  tier: 'GENESIS', generation: 0 },
+  { uid: 'u-moon',  id: 'moon',  name: 'Moon',  emojis: ['🌙'],  tier: 'GENESIS', generation: 0 },
+  { uid: 'u-time',  id: 'time',  name: 'Time',  emojis: ['⏰'],  tier: 'GENESIS', generation: 0 },
 ];
 
 // ─── Daily Task Targets ──────────────────────────────────────────────────────
@@ -396,7 +396,7 @@ export function MiniApp() {
     const y = 30 + Math.random() * (rect.height - 76);
     setCanvasItems((prev) => [...prev, {
       instanceId: newId(), id: item.id, name: item.name, emojis: item.emojis,
-      tier: item.tier, isMegaMind: item.isMegaMind, x, y,
+      tier: item.tier, generation: item.generation, isMegaMind: item.isMegaMind, x, y,
     }]);
   }
 
@@ -434,11 +434,6 @@ export function MiniApp() {
             return prev.map((i) => i.instanceId === instanceId ? { ...i, x: finalX, y: finalY, isDragging: false } : i);
           }
 
-          // BLOCK: Only genesis items can be combined. No infinite chains.
-          if (!isGenesisItem(dragging.id) || !isGenesisItem(target.id)) {
-            return prev.map((i) => i.instanceId === instanceId ? { ...i, x: finalX, y: finalY, isDragging: false } : i);
-          }
-
           const midX = (finalX + target.x) / 2;
           const midY = (finalY + target.y) / 2;
           setCombining({ a: instanceId, b: target.instanceId });
@@ -451,9 +446,9 @@ export function MiniApp() {
             if (aiEnabled) {
               const discoveredItems: DiscoveredItem[] = inventory
                 .filter((i) => i.tier !== "GENESIS")
-                .map((i) => ({ name: i.name, tier: i.tier, emojis: i.emojis.filter(Boolean) as string[] }));
+                .map((i) => ({ name: i.name, tier: i.tier, generation: i.generation, emojis: i.emojis.filter(Boolean) as string[] }));
 
-              const aiResult = await aiCraft(dragging.name, target.name, discoveredItems);
+              const aiResult = await aiCraft(dragging.name, target.name, dragging.generation, target.generation, discoveredItems);
 
               if (aiResult.ok && aiResult.result) {
                 crafted = {
@@ -462,14 +457,14 @@ export function MiniApp() {
                   tier: aiResult.result.tier,
                   isMegaMind: aiResult.result.isMegaMind,
                   recipe: `${dragging.name} + ${target.name}`,
-                  canCraftFurther: false,
+                  generation: aiResult.result.generation,
                 };
               } else {
                 // AI failed — fall back to deterministic recipes
-                crafted = craftFallback(dragging.name, target.name, globalRegistryRef.current);
+                crafted = craftFallback(dragging.name, target.name, dragging.generation, target.generation, globalRegistryRef.current);
               }
             } else {
-              crafted = craftFallback(dragging.name, target.name, globalRegistryRef.current);
+              crafted = craftFallback(dragging.name, target.name, dragging.generation, target.generation, globalRegistryRef.current);
             }
 
             if (!crafted) {
@@ -514,8 +509,8 @@ export function MiniApp() {
             });
 
             const resolvedItem: AppInventoryItem = alreadyInInventory
-              ? { uid: `u-existing-${normalizedName}`, id: normalizedName, name: crafted.name, emojis: crafted.emojis, tier: crafted.tier, isMegaMind: false, isMinted: false }
-              : { uid: `u-crafted-${newId()}`, id: normalizedName, name: crafted.name, emojis: crafted.emojis, tier: crafted.tier, recipe: crafted.recipe, isMegaMind: crafted.isMegaMind, isMinted: false };
+              ? { uid: `u-existing-${normalizedName}`, id: normalizedName, name: crafted.name, emojis: crafted.emojis, tier: crafted.tier, generation: crafted.generation, isMegaMind: false, isMinted: false }
+              : { uid: `u-crafted-${newId()}`, id: normalizedName, name: crafted.name, emojis: crafted.emojis, tier: crafted.tier, recipe: crafted.recipe, generation: crafted.generation, isMegaMind: crafted.isMegaMind, isMinted: false };
 
             setCombining(null);
 
@@ -524,7 +519,7 @@ export function MiniApp() {
               return [...filtered, {
                 instanceId: newId(), id: resolvedItem.id, name: resolvedItem.name,
                 emojis: resolvedItem.emojis, tier: resolvedItem.tier,
-                isMegaMind: resolvedItem.isMegaMind, x: midX, y: midY,
+                generation: resolvedItem.generation, isMegaMind: resolvedItem.isMegaMind, x: midX, y: midY,
               }];
             });
 
@@ -750,6 +745,7 @@ export function MiniApp() {
             >
               <div className={`relative flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border backdrop-blur-sm ${isCombining ? 'bg-amber-900/50 border-amber-400 animate-pulse' : isPulse ? 'bg-yellow-900/50 border-yellow-400 shadow-lg shadow-yellow-500/20' : 'bg-zinc-900/95 border-zinc-700 shadow-md shadow-black/60'}`} style={{ minWidth: 52 }}>
                 {sc && <span className="absolute -top-1.5 -right-1.5 text-[11px] leading-none" style={{ color: sc, textShadow: `0 0 5px ${sc}88` }}>★</span>}
+                {item.generation > 0 && <span className="absolute -top-1.5 -left-1.5 text-[9px] leading-none text-zinc-500 font-mono">G{item.generation}</span>}
                 <span className="text-xl leading-none tracking-tight">{renderEmojis(item.emojis)}</span>
                 <span className="text-white text-xs font-semibold text-center leading-tight">{item.name}</span>
               </div>

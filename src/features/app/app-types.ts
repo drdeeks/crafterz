@@ -8,6 +8,7 @@ export interface AppInventoryItem {
   name: string;
   emojis: [string, string?];
   tier: AppInventoryTier;
+  generation: number;
   isMegaMind?: boolean;
   isMinted?: boolean;
   tokenId?: number;
@@ -20,6 +21,7 @@ export interface AppCanvasItem {
   name: string;
   emojis: [string, string?];
   tier: string;
+  generation: number;
   isMegaMind?: boolean;
   x: number;
   y: number;

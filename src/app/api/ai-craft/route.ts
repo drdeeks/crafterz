@@ -2,15 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { readJson, writeJson } from "@/server/kv-store";
 
-const AI_CRAFT_CACHE_KEY = "craftz:ai-cache:v1";
+const AI_CRAFT_CACHE_KEY = "craftz:ai-cache:v2";
 const AI_DISCOVERED_KEY = "craftz:ai-discovered:v1";
 
 const craftRequestSchema = z.object({
   itemA: z.string().min(1).max(50),
   itemB: z.string().min(1).max(50),
+  genA: z.number().int().min(0).max(50),
+  genB: z.number().int().min(0).max(50),
   discoveredItems: z.array(z.object({
     name: z.string(),
     tier: z.string(),
+    generation: z.number().int().min(0).max(50),
     emojis: z.array(z.string()),
   })).default([]),
 });
@@ -40,8 +43,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { itemA, itemB, discoveredItems } = parsed.data;
+  const { itemA, itemB, genA, genB, discoveredItems } = parsed.data;
   const cacheKey = getCacheKey(itemA, itemB);
+  const resultGeneration = Math.max(genA, genB) + 1;
 
   // Check cache first — same combination always returns same result
   const cache = await readJson<Record<string, z.infer<typeof aiResponseSchema>>>(AI_CRAFT_CACHE_KEY) || {};
@@ -50,7 +54,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       cached: true,
-      result: { ...cache[cacheKey], isMegaMind },
+      result: { ...cache[cacheKey], isMegaMind, generation: resultGeneration },
     });
   }
 
@@ -66,38 +70,55 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Build discovered items list for context
+  // Build discovered items list for context with generation info
   const discoveredList = discoveredItems.length > 0
-    ? discoveredItems.map(d => `- ${d.name} (${d.tier}, emojis: ${d.emojis.join("")})`).join("\n")
+    ? discoveredItems.map(d => `- ${d.name} (Gen ${d.generation}, ${d.tier}, emojis: ${d.emojis.join("")})`).join("\n")
     : "None yet — this is early in the game.";
 
-  // AI prompt — strict, deterministic instructions
-  const systemPrompt = `You are the Crafting Oracle for a Farcaster mini-game called CrafterZ.
+  // Generation context for the AI
+  const genContext = genA === 0 && genB === 0
+    ? "Both ingredients are primordial GENESIS elements (Generation 0). This is a fundamental combination."
+    : genA === 0 || genB === 0
+      ? `One ingredient is a GENESIS element (Gen 0), the other is a crafted item (Gen ${Math.max(genA, genB)}). Combine the primal force with the crafted concept.`
+      : `Both ingredients are crafted items (Gen ${genA} and Gen ${genB}). This is a complex, advanced combination (result will be Gen ${resultGeneration}). Think deeply about how these two concepts merge.`;
+
+  // AI prompt — strict, deterministic instructions with generation awareness
+  const systemPrompt = `You are the Crafting Oracle for a Farcaster mini-game called CrafterZ. Players combine items to create new ones, building up through generations of complexity.
 
 RULES:
 1. Two items are being combined. You must determine what they create.
 2. The result must be LOGICAL and SEMANTICALLY RELATED to both ingredients.
 3. Return EXACTLY 2 emojis that represent the result.
-4. Tier assignment:
-   - COMMON: Simple, everyday combinations (60% of results)
+4. Tier assignment based on complexity:
+   - COMMON: Simple, intuitive combinations (60%)
    - RARE: Interesting, non-obvious but logical combinations (30%)
    - LEGENDARY: Profound, rare, or cosmic combinations (10%)
-5. The name should be 1-3 words, capitalized, and evocative.
-6. DO NOT create items that already exist in the discovered list.
-7. Be creative but grounded — no nonsense like "Fire + Water = Blahblah".
-8. The description should be 1 short sentence explaining the connection.
+5. Higher generations should produce more complex/abstract results.
+6. The name should be 1-3 words, capitalized, and evocative.
+7. DO NOT create items that already exist in the discovered list.
+8. Be creative but grounded — results should feel inevitable once seen.
+9. The description should be 1 short sentence explaining the connection.
+
+GENERATION SYSTEM:
+- Generation 0: Primordial elements (Fire, Water, Earth, Air, Sun, Moon, Time)
+- Generation 1: Direct combinations of elements (Steam, Lava, Ice, etc.)
+- Generation 2+: Complex merges of crafted items (Steam + Earth = Geyser, etc.)
+- Higher generations = more abstract, powerful, or cosmic concepts
 
 EXAMPLES:
-- Fire + Water = Steam (COMMON, emojis: ["💨","🌫️"])
-- Earth + Fire = Lava (RARE, emojis: ["🌋","🔴"])
-- Moon + Sun = Eclipse (LEGENDARY, emojis: ["🌘","☀️"])
-- Water + Time = Ice (COMMON, emojis: ["🧊","💧"])
-- Earth + Time = Fossil (RARE, emojis: ["🦴","🪨"])
+- Fire + Water (Gen 0+0) = Steam (Gen 1, COMMON, emojis: ["💨","🌫️"])
+- Earth + Fire (Gen 0+0) = Lava (Gen 1, RARE, emojis: ["🌋","🔴"])
+- Moon + Sun (Gen 0+0) = Eclipse (Gen 1, LEGENDARY, emojis: ["🌘","☀️"])
+- Steam + Earth (Gen 1+0) = Geyser (Gen 2, RARE, emojis: ["⛲","💨"])
+- Lava + Time (Gen 1+0) = Obsidian (Gen 2, RARE, emojis: ["🖤","🪨"])
+- Geyser + Time (Gen 2+0) = Old Faithful (Gen 3, LEGENDARY, emojis: ["🏔️","⏰"])
 
 Respond with ONLY valid JSON matching this schema:
 {"name": string, "emojis": [string, string], "tier": "COMMON"|"RARE"|"LEGENDARY", "description": string}`;
 
-  const userPrompt = `What is created when "${itemA}" and "${itemB}" are combined?
+  const userPrompt = `What is created when "${itemA}" (Gen ${genA}) and "${itemB}" (Gen ${genB}) are combined?
+
+${genContext}
 
 Already discovered items (do NOT duplicate these):
 ${discoveredList}
@@ -117,7 +138,7 @@ Return ONLY the JSON object.`;
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.3, // Low temperature for consistency
+        temperature: 0.3,
         max_tokens: 150,
         response_format: { type: "json_object" },
       }),
@@ -161,7 +182,6 @@ Return ONLY the JSON object.`;
     );
 
     if (conflict) {
-      // AI duplicated an existing item — return the existing one
       return NextResponse.json({
         ok: true,
         cached: true,
@@ -171,6 +191,7 @@ Return ONLY the JSON object.`;
           emojis: conflict.emojis,
           tier: conflict.tier,
           isMegaMind: false,
+          generation: resultGeneration,
         },
       });
     }
@@ -195,6 +216,7 @@ Return ONLY the JSON object.`;
       result: {
         ...aiResult,
         isMegaMind: isNewGlobalDiscovery,
+        generation: resultGeneration,
       },
     });
   } catch (error) {
