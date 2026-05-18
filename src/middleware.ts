@@ -34,7 +34,7 @@ const X402_PROTECTED_ROUTES = {
     accepts: [
       {
         scheme: "exact",
-        price: process.env.X402_TASKS_PRICE || "$0.01",
+        price: process.env.X402_CRAFT_PRICE || "$0.01",
         network: "eip155:8453" as `${string}:${string}`,
         payTo: X402_EVM_ADDRESS,
       },
@@ -47,7 +47,7 @@ const X402_PROTECTED_ROUTES = {
     accepts: [
       {
         scheme: "exact",
-        price: process.env.X402_GM_PRICE || "$0.01",
+        price: process.env.X402_GM_PRICE || "$0.50",
         network: "eip155:8453" as `${string}:${string}`,
         payTo: X402_EVM_ADDRESS,
       },
@@ -60,7 +60,7 @@ const X402_PROTECTED_ROUTES = {
     accepts: [
       {
         scheme: "exact",
-        price: process.env.X402_MINT_PRICE || "$0.10",
+        price: process.env.X402_MINT_PRICE || "$0.05",
         network: "eip155:8453" as `${string}:${string}`,
         payTo: X402_EVM_ADDRESS,
       },
