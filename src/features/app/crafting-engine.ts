@@ -1,11 +1,11 @@
 // ============================================================================
 // SEMANTIC CRAFTING ENGINE
 // ============================================================================
-// Real deterministic crafting with:
+// Hybrid crafting: AI-powered when AI_API_KEY is set, deterministic fallback
+// when it isn't. Both modes enforce:
 // - Only genesis items can be combined (no infinite chains)
 // - Server-validated MegaMind detection (first global discovery only)
 // - Persistent emoji associations per item
-// - AI-driven result generation via semantic category matching
 // ============================================================================
 
 export type ItemTier = "GENESIS" | "COMMON" | "RARE" | "LEGENDARY";
@@ -40,10 +40,7 @@ export const GENESIS_ITEMS: GenesisItem[] = [
   { id: "time",  name: "Time",  emojis: ["⏰"], tier: "GENESIS", category: "abstract", canCraftFurther: true },
 ];
 
-// ─── Definitive Combination Registry ─────────────────────────────────────────
-// Each entry: [ingredientA + ingredientB, result]
-// Keys are sorted alphabetically for deterministic lookup.
-// This is the SINGLE SOURCE OF TRUTH — no infinite chains possible.
+// ─── Definitive Combination Registry (fallback when AI is unavailable) ────────
 
 const CRAFT_RECIPES: Record<string, Omit<CraftedItem, "isMegaMind">> = {
   // Element + Element
@@ -76,34 +73,74 @@ const CRAFT_RECIPES: Record<string, Omit<CraftedItem, "isMegaMind">> = {
   // Abstract + Celestial
   "sun+time":   { name: "Season",   emojis: ["🍂", "☀️"],   tier: "RARE",      recipe: "Sun + Time",    canCraftFurther: false },
   "moon+time":  { name: "Phase",    emojis: ["🌗", "⏰"],   tier: "RARE",      recipe: "Moon + Time",   canCraftFurther: false },
-
-  // Abstract + Abstract (only one abstract item exists, so this is future-proof)
 };
 
-// ─── Crafting Function ───────────────────────────────────────────────────────
+// ─── Deterministic Fallback Craft ────────────────────────────────────────────
 
-export function craft(
+export function craftFallback(
   itemA: string,
   itemB: string,
   globalRegistry: Set<string>,
 ): CraftedItem | null {
   const a = itemA.toLowerCase().trim();
   const b = itemB.toLowerCase().trim();
-
-  // Sort for deterministic key
   const key = a < b ? `${a}+${b}` : `${b}+${a}`;
-
-  // Check if recipe exists
   const recipe = CRAFT_RECIPES[key];
   if (!recipe) return null;
-
-  // MegaMind = first ever global discovery of this item
   const isMegaMind = !globalRegistry.has(recipe.name.toLowerCase());
+  return { ...recipe, isMegaMind };
+}
 
-  return {
-    ...recipe,
-    isMegaMind,
+// ─── AI-Powered Craft (calls /api/ai-craft) ──────────────────────────────────
+
+export interface DiscoveredItem {
+  name: string;
+  tier: string;
+  emojis: string[];
+}
+
+export interface AiCraftResult {
+  ok: boolean;
+  cached?: boolean;
+  conflict?: boolean;
+  result?: {
+    name: string;
+    emojis: [string, string?];
+    tier: ItemTier;
+    isMegaMind: boolean;
+    description?: string;
   };
+  error?: string;
+}
+
+export async function aiCraft(
+  itemA: string,
+  itemB: string,
+  discoveredItems: DiscoveredItem[],
+): Promise<AiCraftResult> {
+  try {
+    const res = await fetch("/api/ai-craft", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemA, itemB, discoveredItems }),
+    });
+
+    const data = await res.json();
+
+    if (!data.ok) {
+      return { ok: false, error: data.error || "AI craft failed" };
+    }
+
+    return {
+      ok: true,
+      cached: data.cached,
+      conflict: data.conflict,
+      result: data.result,
+    };
+  } catch (err) {
+    console.error("AI craft request failed:", err);
+    return { ok: false, error: "Network error" };
+  }
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

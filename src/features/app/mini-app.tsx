@@ -12,7 +12,7 @@ import {
   ServerPlayer,
   ServerTask,
 } from './runtime-api';
-import { craft, isGenesisItem, getGenesisItem } from './crafting-engine';
+import { craftFallback, aiCraft, isGenesisItem, getGenesisItem, DiscoveredItem, CraftedItem } from './crafting-engine';
 import { DiscoveryFeedItem, toDiscoveryFeed } from './discovery-feed';
 import type {
   AppCanvasItem,
@@ -177,6 +177,7 @@ export function MiniApp() {
   const [inventory, setInventory] = useState<AppInventoryItem[]>(INITIAL_INVENTORY);
   const [canvasItems, setCanvasItems] = useState<AppCanvasItem[]>([]);
   const [combining, setCombining] = useState<{ a: string; b: string } | null>(null);
+  const [aiEnabled, setAiEnabled] = useState<boolean | null>(null); // null = checking
   const [pulseTarget, setPulseTarget] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -338,6 +339,16 @@ export function MiniApp() {
     return () => clearTimeout(t);
   }, [adminFeedback]);
 
+  // Check if AI crafting is available
+  useEffect(() => {
+    fetch("/api/ai-craft", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ itemA: "test", itemB: "check", discoveredItems: [] }) })
+      .then((r) => r.json())
+      .then((d) => {
+        setAiEnabled(d.ok === true || (d.error && !d.error.includes("AI_API_KEY")));
+      })
+      .catch(() => setAiEnabled(false));
+  }, []);
+
   const megaMindItems = inventory.filter((i) => i.isMegaMind);
   const filteredInventory = inventory.filter((i) => i.name.toLowerCase().includes(searchQuery.toLowerCase()));
   const tasksCompleted = dailyTasks.filter((t) => t.completed).length;
@@ -433,8 +444,33 @@ export function MiniApp() {
           setCombining({ a: instanceId, b: target.instanceId });
           setCraftz((c) => { const next = Math.max(0, c - CRAFTZ_COST); craftzRef.current = next; return next; });
 
-          setTimeout(() => {
-            const crafted = craft(dragging.name, target.name, globalRegistryRef.current);
+          // Async craft resolution — AI when available, fallback otherwise
+          void (async () => {
+            let crafted: CraftedItem | null = null;
+
+            if (aiEnabled) {
+              const discoveredItems: DiscoveredItem[] = inventory
+                .filter((i) => i.tier !== "GENESIS")
+                .map((i) => ({ name: i.name, tier: i.tier, emojis: i.emojis.filter(Boolean) as string[] }));
+
+              const aiResult = await aiCraft(dragging.name, target.name, discoveredItems);
+
+              if (aiResult.ok && aiResult.result) {
+                crafted = {
+                  name: aiResult.result.name,
+                  emojis: aiResult.result.emojis,
+                  tier: aiResult.result.tier,
+                  isMegaMind: aiResult.result.isMegaMind,
+                  recipe: `${dragging.name} + ${target.name}`,
+                  canCraftFurther: false,
+                };
+              } else {
+                // AI failed — fall back to deterministic recipes
+                crafted = craftFallback(dragging.name, target.name, globalRegistryRef.current);
+              }
+            } else {
+              crafted = craftFallback(dragging.name, target.name, globalRegistryRef.current);
+            }
 
             if (!crafted) {
               setCombining(null);
@@ -506,7 +542,7 @@ export function MiniApp() {
                 }), 400);
               }
             }
-          }, 650);
+          })();
 
           return prev.map((i) => i.instanceId === instanceId ? { ...i, x: finalX, y: finalY, isDragging: false } : i);
         }
@@ -520,7 +556,7 @@ export function MiniApp() {
 
     document.addEventListener('pointermove', onMove);
     document.addEventListener('pointerup', onUp);
-  }, [canvasItems, mintingPaused, refreshServerSnapshot, syncFromServerPlayer]);
+  }, [canvasItems, mintingPaused, refreshServerSnapshot, syncFromServerPlayer, aiEnabled]);
 
   function startMint(item: AppInventoryItem) {
     if (mintingPaused) { setAdminFeedback('Minting is currently paused'); return; }
