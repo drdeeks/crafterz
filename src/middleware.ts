@@ -21,15 +21,11 @@ const resourceServer = new x402ResourceServer(facilitatorClient)
   .register("eip155:*", new ExactEvmScheme())
   .register("solana:*", new ExactSvmScheme());
 
-// Get the appropriate network based on mode
-const getNetwork = (mainnet: string, testnet: string) => (isTestnet ? testnet : mainnet);
-
 // Default wallet address - MUST be configured for production
 const X402_EVM_ADDRESS = process.env.X402_EVM_ADDRESS || "0x0000000000000000000000000000000000000000";
 
 // Define protected routes with x402
 const X402_PROTECTED_ROUTES = {
-  // Protect craft endpoint - requires payment for crafting
   "/api/craft": {
     accepts: [
       {
@@ -42,7 +38,6 @@ const X402_PROTECTED_ROUTES = {
     description: "Craft an item in CrafterZ game",
   },
   
-  // Protect gm endpoint - requires payment for GM
   "/api/gm": {
     accepts: [
       {
@@ -55,7 +50,6 @@ const X402_PROTECTED_ROUTES = {
     description: "GM (Good Morning) transaction in CrafterZ",
   },
   
-  // Protect mint endpoint - requires payment for minting ($0.05 per MegaMind)
   "/api/mint": {
     accepts: [
       {
@@ -68,7 +62,6 @@ const X402_PROTECTED_ROUTES = {
     description: "Mint a MegaMind NFT in CrafterZ",
   },
   
-  // Protect tasks endpoint - requires payment for completing tasks
   "/api/tasks": {
     accepts: [
       {
@@ -83,19 +76,21 @@ const X402_PROTECTED_ROUTES = {
 };
 
 // Create payment proxy with sync disabled in dev (avoid facilitator calls)
-export const proxy = paymentProxy(
+const x402Proxy = paymentProxy(
   X402_PROTECTED_ROUTES,
   resourceServer,
   undefined,
   undefined,
-  !isTestnet // Only sync facilitator on start in production
+  !isTestnet
 );
 
+// Next.js requires a "middleware" function export
+export function middleware(request: NextRequest) {
+  return x402Proxy(request);
+}
+
 // Configure middleware to run on specific paths
-// Note: /api/mint is handled separately to support whitelisted free minting
+// Note: /api/mint is excluded from matcher — handled separately for whitelisted free minting
 export const config = {
   matcher: ["/api/craft", "/api/gm", "/api/tasks"],
 };
-
-// Export for use in API routes
-export { resourceServer, facilitatorClient, isTestnet };
