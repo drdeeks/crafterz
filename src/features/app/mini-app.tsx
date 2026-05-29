@@ -24,12 +24,17 @@ import type {
   EvmChainOption,
 } from './app-types';
 import {
-  AdminTab,
   InventoryTab,
-  LeaderboardTab,
   MegaMindsTab,
   TasksTab,
+  AdminTab,
+  LeaderboardTab,
 } from './mini-app-tabs';
+import {
+  AppHeader,
+  CraftingCanvas,
+  CraftzBar,
+} from './mini-app-components';
 
 // ─── Point values ────────────────────────────────────────────────────────────
 const PTS = {
@@ -214,8 +219,10 @@ export function MiniApp() {
   const mintModalRef = useRef(mintModal);
   mintModalRef.current = mintModal;
 
-  const [adminFeedback, setAdminFeedback] = useState<string | null>(null);
-  const [mintingPaused, setMintingPaused] = useState(false);
+   const [adminFeedback, setAdminFeedback] = useState<string | null>(null);
+   const [mintingPaused, setMintingPaused] = useState(false);
+   const [showMintPriceInput, setShowMintPriceInput] = useState(false);
+   const [mintPriceDraft, setMintPriceDraft] = useState('0.01');
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ instanceId: string; startX: number; startY: number; itemX: number; itemY: number } | null>(null);
@@ -599,6 +606,33 @@ export function MiniApp() {
   function clearCanvas() { setCanvasItems([]); setCombining(null); }
   function adminAction(msg: string) { setAdminFeedback(msg); }
 
+  const onToggleMintingPause = useCallback(() => {
+    setMintingPaused((prev) => !prev);
+    adminAction(mintingPaused ? 'Minting resumed' : 'Minting paused');
+  }, [mintingPaused, adminAction]);
+
+  const onOpenMintPriceInput = useCallback(() => {
+    setShowMintPriceInput(true);
+    setMintPriceDraft(CRAFTZ_COST.toString());
+  }, []);
+
+  const onChangeMintPriceDraft = useCallback((value: string) => {
+    setMintPriceDraft(value);
+  }, []);
+
+  const onApplyMintPrice = useCallback(() => {
+    const newPrice = parseFloat(mintPriceDraft);
+    if (!isNaN(newPrice) && newPrice > 0) {
+      // In a real app, this would update the contract
+      adminAction(`Mint price set to ${newPrice} CRAFTZ`);
+      setShowMintPriceInput(false);
+    }
+  }, [mintPriceDraft, adminAction]);
+
+  const onCancelMintPriceInput = useCallback(() => {
+    setShowMintPriceInput(false);
+  }, []);
+
   const craftzColor = craftz > 49 ? '#22c55e' : craftz > 19 ? '#eab308' : '#ef4444';
   const craftzLow = craftz < CRAFTZ_COST;
 
@@ -694,76 +728,37 @@ export function MiniApp() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-900 border-b border-zinc-800 flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-black tracking-tight text-white">CrafterZ</span>
-          <span className="inline-flex items-center gap-1.5 text-[10px] text-zinc-400 border border-zinc-700 rounded-full px-2 py-0.5">
-            <span className={`w-1.5 h-1.5 rounded-full ${syncColor}`} />
-            {syncLabel}
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-zinc-400">Rank <span className="text-white font-bold">#{myRank}</span></div>
-          <div className="w-px h-3 bg-zinc-700" />
-          <span className="text-amber-400 text-xs font-bold">{myPoints.toLocaleString()} pts</span>
-          <img src="https://api.dicebear.com/9.x/lorelei/svg?seed=you" className="w-7 h-7 rounded-full border border-zinc-700" alt="" />
-        </div>
-      </div>
+      {/* ── Header ── */}
+      <AppHeader
+        syncColor={syncColor}
+        syncLabel={syncLabel}
+        isAdmin={false}
+        myRank={typeof myRank === 'number' ? myRank : 99}
+        myPoints={myPoints}
+        username="you"
+      />
 
-      {/* Canvas — expanded size */}
-      <div ref={canvasRef} className="relative flex-shrink-0 bg-zinc-950 border-b border-zinc-800 overflow-hidden" style={{ height: 280 }}>
-        <div className="absolute inset-0 opacity-[0.12]" style={{ backgroundImage: 'radial-gradient(circle, #71717a 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
+      {/* ── Canvas ── */}
+      <CraftingCanvas
+        canvasRef={canvasRef}
+        canvasItems={canvasItems}
+        craftzLow={craftzLow}
+        onClearCanvas={clearCanvas}
+        onPointerDown={handlePointerDown}
+        combining={combining}
+        pulseTarget={pulseTarget}
+        renderEmojis={renderEmojis}
+        starColor={starColor}
+      />
 
-        {canvasItems.length === 0 && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
-            <span className="text-2xl opacity-25">✨</span>
-            <p className="text-zinc-600 text-xs text-center leading-relaxed">Tap a genesis element below to place it here<br />then drag one onto another to combine</p>
-          </div>
-        )}
-
-        {craftzLow && canvasItems.length > 0 && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 bg-red-950/80 border border-red-700/50 rounded-lg px-3 py-1 pointer-events-none">
-            <p className="text-red-400 text-xs font-semibold">Not enough Craftz to combine!</p>
-          </div>
-        )}
-
-        {canvasItems.length > 0 && (
-          <button onClick={clearCanvas} className="absolute top-2 right-2 z-10 text-zinc-600 text-xs bg-zinc-900/90 px-2 py-1 rounded-lg border border-zinc-800 hover:text-zinc-300 transition-colors">Clear</button>
-        )}
-
-        {canvasItems.map((item) => {
-          const isCombining = combining && (combining.a === item.instanceId || combining.b === item.instanceId);
-          const isPulse = pulseTarget === item.instanceId;
-          const sc = starColor(item.tier, item.isMegaMind);
-          return (
-            <div
-              key={item.instanceId}
-              onPointerDown={(e) => handlePointerDown(e, item.instanceId)}
-              className="absolute select-none"
-              style={{ left: item.x, top: item.y, transform: `translate(-50%,-50%) scale(${item.isDragging ? 1.12 : 1})`, transition: item.isDragging ? 'none' : 'transform 0.12s ease', zIndex: item.isDragging ? 20 : 10, touchAction: 'none', cursor: 'grab' }}
-            >
-              <div className={`relative flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border backdrop-blur-sm ${isCombining ? 'bg-amber-900/50 border-amber-400 animate-pulse' : isPulse ? 'bg-yellow-900/50 border-yellow-400 shadow-lg shadow-yellow-500/20' : 'bg-zinc-900/95 border-zinc-700 shadow-md shadow-black/60'}`} style={{ minWidth: 52 }}>
-                {sc && <span className="absolute -top-1.5 -right-1.5 text-[11px] leading-none" style={{ color: sc, textShadow: `0 0 5px ${sc}88` }}>★</span>}
-                {item.generation > 0 && <span className="absolute -top-1.5 -left-1.5 text-[9px] leading-none text-zinc-500 font-mono">G{item.generation}</span>}
-                <span className="text-xl leading-none tracking-tight">{renderEmojis(item.emojis)}</span>
-                <span className="text-white text-xs font-semibold text-center leading-tight">{item.name}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Craftz Bar */}
-      <div className="px-4 py-2 bg-zinc-900/80 border-b border-zinc-800 flex-shrink-0">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs text-zinc-500">⚡ Craftz <span style={{ color: craftzColor }} className="font-mono font-semibold">{craftz}/{CRAFTZ_MAX}</span>{craftzLow && <span className="text-red-500 ml-1.5 font-semibold">· need {CRAFTZ_COST}</span>}</span>
-          <span className="text-xs text-zinc-600">+1 per 2.5s · costs {CRAFTZ_COST} to craft</span>
-        </div>
-        <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(craftz / CRAFTZ_MAX) * 100}%`, backgroundColor: craftzColor }} />
-        </div>
-      </div>
+      {/* ── Craftz Bar ── */}
+      <CraftzBar
+        craftz={craftz}
+        craftzMax={CRAFTZ_MAX}
+        craftzCost={CRAFTZ_COST}
+        craftzColor={craftzColor}
+        craftzLow={craftzLow}
+      />
 
       {/* Tab Bar */}
       <div className="flex border-b border-zinc-800 bg-zinc-900 flex-shrink-0">
@@ -792,6 +787,30 @@ export function MiniApp() {
         )}
         {activeTab === 'leaderboard' && (
           <LeaderboardTab myRank={typeof myRank === 'number' ? myRank : 99} leaderboardData={leaderboardData} recentDiscoveries={recentDiscoveries} renderEmojis={renderEmojis} tierBadge={TIER_BADGE} points={PTS} />
+        )}
+        {activeTab === 'admin' && (
+          <AdminTab
+            adminFid={0}
+            adminStats={{
+              totalWords: 0,
+              totalPlayers: 0,
+              totalCrafts: 0,
+              megaMindsDiscovered: 0,
+              megaMindsMinted: 0,
+              craftzCirculating: 0,
+              contractBalance: '0',
+            }}
+            mintingPaused={mintingPaused}
+            showMintPriceInput={showMintPriceInput}
+            mintPrice={CRAFTZ_COST}
+            mintPriceDraft={mintPriceDraft}
+            onToggleMintingPause={onToggleMintingPause}
+            onOpenMintPriceInput={onOpenMintPriceInput}
+            onChangeMintPriceDraft={onChangeMintPriceDraft}
+            onApplyMintPrice={onApplyMintPrice}
+            onCancelMintPriceInput={onCancelMintPriceInput}
+            onAdminAction={adminAction}
+          />
         )}
       </div>
     </div>
