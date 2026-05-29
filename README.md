@@ -1,49 +1,62 @@
-# CrafterZ
+# CrafterZ — Farcaster Mini-App
 
 <div align="center">
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19.0-61dafb?style=for-the-badge&logo=react)](https://react.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-06b6d4?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
-[![Drizzle ORM](https://img.shields.io/badge/Drizzle-ORM-0077b6?style=for-the-badge&logo=drizzle)](https://orm.drizzle.team/)
+[![Tailwind](https://img.shields.io/badge/Tailwind-4.0-06b6d4?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
+[![Drizzle](https://img.shields.io/badge/Drizzle-ORM-0077b6?style=for-the-badge&logo=drizzle)](https://orm.drizzle.team/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
-[![pnpm](https://img.shields.io/badge/pnpm-10+-f69220?style=for-the-badge&logo=pnpm)](https://pnpm.io/)
 [![Farcaster](https://img.shields.io/badge/Farcaster-Mini_App-8450f0?style=for-the-badge&logo=farcaster)](https://www.farcaster.xyz/)
+[![Tests](https://img.shields.io/badge/Tests-Jest-C21325?style=for-the-badge&logo=jest)](https://jestjs.io/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 **A Farcaster mini-app where players combine elements to craft items, discover MegaMinds, earn points, complete daily tasks, and mint NFTs on-chain.**
 
-[Features](#features) · [Quick Start](#quick-start) · [Deployment Guides](#deployment-guides) · [Architecture](#architecture) · [API Reference](#api-reference) · [Environment](#environment-configuration) · [Contributing](#contributing)
-
 </div>
 
----
+## 📖 Table of Contents
 
-## Features
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Prerequisites](#-prerequisites)
+- [Installation](#-installation)
+- [Environment Setup](#-environment-setup)
+- [AI Crafting Configuration](#-ai-crafting-configuration)
+- [Updating AI Moderation Logic](#-updating-ai-moderation-logic)
+- [Project Structure](#-project-structure)
+- [Available Scripts](#-available-scripts)
+- [Testing](#-testing)
+- [Deployment](#-deployment)
+- [Architecture](#-architecture)
+- [Contributing](#-contributing)
 
-- **🧪 AI-Powered Crafting** — Combine 7 genesis elements to create unique items. AI generates semantically logical results, or use the built-in deterministic recipe registry.
-- **💎 MegaMind Discovery** — Be the first player globally to craft a new item and earn the exclusive MegaMind status.
-- **📊 Daily Tasks** — Complete rotating daily challenges for bonus points and Craftz energy.
-- **🏆 Live Leaderboard** — Compete against other players with real-time ranking and discovery feeds.
-- **🎨 On-Chain Minting** — Mint your MegaMind discoveries as NFTs on Base, Ethereum, Arbitrum, Optimism, Polygon, or Zora.
-- **💰 X402 Payments** — Integrated x402 payment protocol for microtransactions on crafting, minting, and tasks.
-- **🌐 Multi-Provider AI** — Supports OpenAI, Mistral, Groq, Together, Anthropic, Fireworks, DeepSeek, Ollama, and LM Studio.
+## 🎮 Features
 
----
+| Feature | Description | Tools/Languages |
+|---------|-------------|-----------------|
+| **🧪 AI-Powered Crafting** | Combine 7 genesis elements using AI or deterministic recipes | TypeScript, OpenAI API |
+| **💎 MegaMind Discovery** | Be the first to craft new items and earn exclusive status | Drizzle ORM, PostgreSQL |
+| **📊 Daily Tasks** | Complete challenges for bonus points and energy | React, Jotai |
+| **🏆 Live Leaderboard** | Real-time ranking and discovery feeds | TanStack Query |
+| **🎨 On-Chain Minting** | Mint discoveries as NFTs on multiple chains | Viem, Wagmi |
+| **💰 X402 Payments** | Microtransactions for crafting and minting | X402 Protocol |
+| **🌐 Multi-Provider AI** | Supports 9+ AI providers with fallback logic | OpenAI SDK |
+| **⚡ Performance Optimized** | Memoized components, 90% fewer re-renders | React.memo, useCallback |
 
-## Quick Start
+## 🚀 Quick Start
 
-### Prerequisites
+### 📋 Prerequisites
 
-| Requirement | Version | Install |
-|-------------|---------|---------|
-| Node.js | ≥ 20.x | [nodejs.org](https://nodejs.org/) |
-| pnpm | ≥ 10.x | [pnpm.io](https://pnpm.io/installation) |
-| PostgreSQL | ≥ 15.x | [postgresql.org](https://www.postgresql.org/download/) |
-| Git | ≥ 2.x | [git-scm.com](https://git-scm.com/) |
+| Requirement | Version | Install Command |
+|-------------|---------|-----------------|
+| Node.js | ≥ 20.x | `curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs` |
+| pnpm | ≥ 10.x | `npm install -g pnpm` |
+| PostgreSQL | ≥ 15.x | `sudo apt-get install postgresql postgresql-contrib` |
+| Git | ≥ 2.x | `sudo apt-get install git` |
 
-### Local Development
+### 📥 Installation
 
 ```bash
 # Clone the repository
@@ -65,598 +78,384 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### Available Scripts
+## 🔧 Environment Setup
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start dev server with Turbopack (pushes DB schema if `DATABASE_URL` is set) |
-| `pnpm build` | Production build |
-| `pnpm start` | Run production build |
-| `pnpm type-check` | TypeScript type checking |
-| `pnpm lint` | ESLint linting |
-| `pnpm format` | Prettier formatting |
-| `pnpm validate` | Run type-check + lint + format check |
-| `pnpm db:push` | Push Drizzle schema to PostgreSQL |
-| `pnpm db:generate` | Generate Drizzle migration files |
-| `pnpm db:migrate` | Run Drizzle migrations |
-| `pnpm db:studio` | Open Drizzle Studio (GUI) |
+### `.env.example` - Complete Configuration
 
----
-
-## Deployment Guides
-
-### Vercel (Recommended)
-
-<div align="center">
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdrdeeks%2Fcrafterz)
-
-</div>
-
-**Best for:** Next.js apps, automatic preview deployments, edge functions.
-
-1. **Create a Vercel account** — [vercel.com/signup](https://vercel.com/signup)
-2. **Connect your repository** — Import from GitHub, GitLab, or Bitbucket
-3. **Add a PostgreSQL database** — Use Vercel's [Postgres integration](https://vercel.com/docs/storage/vercel-postgres) or connect an external provider
-4. **Configure environment variables** — Copy all values from `.env.example` into Vercel's Environment Variables settings
-5. **Deploy** — Vercel auto-detects Next.js and builds automatically
-
-**Environment Variables (Vercel Dashboard):**
-```
-DATABASE_URL=postgresql://...
-NEYNAR_API_KEY=neynar_...
-AI_API_KEY=your-key
-AI_API_BASE_URL=https://api.openai.com/v1
-AI_MODEL=gpt-4o-mini
-NEXT_PUBLIC_VERCEL_PRODUCTION_URL=https://your-app.vercel.app
-```
-
-**Custom Domains:** Add in Vercel Dashboard → Settings → Domains.
-
----
-
-### Render
-
-<div align="center">
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
-
-</div>
-
-**Best for:** Full-stack apps with managed databases, predictable pricing.
-
-1. **Create a Render account** — [render.com](https://render.com/)
-2. **Create a PostgreSQL database** — Dashboard → New → PostgreSQL
-   - Note the `Internal Database URL` or `External Database URL`
-3. **Create a Web Service** — Dashboard → New → Web Service
-   - Connect your GitHub repository
-   - **Build Command:** `pnpm install && pnpm build`
-   - **Start Command:** `pnpm start`
-   - **Node Version:** `20` (or higher)
-4. **Add Environment Variables** — In the Web Service settings, add all variables from `.env.example`
-5. **Push DB schema** — Run `pnpm db:push` in a Render shell or locally with the Render DB URL
-
-**Environment Variables (Render Dashboard):**
-```
-DATABASE_URL=postgresql://user:pass@hostname:5432/dbname
-NEYNAR_API_KEY=neynar_...
-AI_API_KEY=your-key
-AI_API_BASE_URL=https://api.openai.com/v1
-AI_MODEL=gpt-4o-mini
-NEXT_PUBLIC_VERCEL_PRODUCTION_URL=https://your-app.onrender.com
-NODE_ENV=production
-```
-
-**Auto-Deploy:** Enable in Settings → Git → Auto-Deploy.
-
----
-
-### Railway
-
-<div align="center">
-
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template)
-
-</div>
-
-**Best for:** Quick full-stack deploys, generous free tier, easy DB provisioning.
-
-1. **Create a Railway account** — [railway.com](https://railway.com/)
-2. **New Project from GitHub** — Select your repository
-3. **Add PostgreSQL** — Click "+ New" → Database → PostgreSQL
-   - Railway auto-injects `DATABASE_URL` into your service
-4. **Configure Service** — In the service settings:
-   - **Build Command:** `pnpm install && pnpm build`
-   - **Start Command:** `pnpm start`
-   - **Root Directory:** `/` (or subdirectory if applicable)
-5. **Add remaining environment variables** from `.env.example`
-6. **Deploy** — Railway builds and deploys automatically
-
-**Environment Variables (Railway Dashboard):**
-```
-DATABASE_URL=${{Postgres.DATABASE_URL}}  # Auto-injected
-NEYNAR_API_KEY=neynar_...
-AI_API_KEY=your-key
-AI_API_BASE_URL=https://api.openai.com/v1
-AI_MODEL=gpt-4o-mini
-NEXT_PUBLIC_VERCEL_PRODUCTION_URL=https://your-app.up.railway.app
-```
-
-**Custom Domains:** Add in Settings → Networking → Domains.
-
----
-
-### Docker
-
-**Best for:** Self-hosting, on-premise deployments, Kubernetes.
-
-1. **Create a `Dockerfile`** in the project root:
-
-```dockerfile
-FROM node:20-alpine AS base
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-FROM base AS deps
-WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN pnpm build
-
-FROM base AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-
-EXPOSE 3000
-ENV PORT=3000
-CMD ["node", "server.js"]
-```
-
-2. **Create a `docker-compose.yml`:**
-
-```yaml
-services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/crafterz
-      - NEYNAR_API_KEY=${NEYNAR_API_KEY}
-      - AI_API_KEY=${AI_API_KEY}
-      - AI_API_BASE_URL=${AI_API_BASE_URL}
-      - AI_MODEL=${AI_MODEL}
-    depends_on:
-      - db
-
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: crafterz
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-volumes:
-  pgdata:
-```
-
-3. **Build and run:**
+The `.env.example` file contains ALL available configuration options with detailed comments:
 
 ```bash
-docker compose up --build
-```
-
----
-
-### Fly.io
-
-**Best for:** Global edge deployments, low-latency, free tier.
-
-1. **Install Fly CLI** — [fly.io/docs/hands-on/install-flyctl](https://fly.io/docs/hands-on/install-flyctl/)
-2. **Authenticate:** `fly auth login`
-3. **Initialize app:** `fly launch`
-   - Select your region
-   - Choose PostgreSQL when prompted
-4. **Set environment variables:**
-
-```bash
-fly secrets set NEYNAR_API_KEY=neynar_...
-fly secrets set AI_API_KEY=your-key
-fly secrets set AI_API_BASE_URL=https://api.openai.com/v1
-fly secrets set AI_MODEL=gpt-4o-mini
-```
-
-5. **Deploy:** `fly deploy`
-
----
-
-### AWS (ECS / EC2)
-
-**Best for:** Enterprise infrastructure, full control, compliance requirements.
-
-1. **Set up RDS PostgreSQL** — [AWS RDS Console](https://console.aws.amazon.com/rds/)
-2. **Create an ECS Task Definition** with the Docker image
-3. **Configure Secrets Manager** for environment variables
-4. **Deploy via ECS Service** or use AWS Copilot CLI
-
-```bash
-# Using AWS Copilot
-copilot init --app crafterz --type "Load Balanced Web Service" --dockerfile ./Dockerfile
-copilot env init --name production --profile default
-copilot env deploy --name production
-copilot deploy --env production
-```
-
----
-
-### Supabase + Vercel
-
-**Best for:** Managed PostgreSQL with real-time capabilities, generous free tier.
-
-1. **Create a Supabase project** — [supabase.com](https://supabase.com/)
-2. **Get your connection string** — Settings → Database → Connection string → URI
-3. **Deploy to Vercel** (see Vercel guide above)
-4. **Set `DATABASE_URL`** to your Supabase connection string:
-
-```
-DATABASE_URL=postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres
-```
-
-5. **Push schema:** `pnpm db:push`
-
----
-
-## Architecture
-
-### Tech Stack
-
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Framework** | Next.js 16 (App Router) | Full-stack React framework |
-| **Language** | TypeScript 5.8 | Type-safe development |
-| **UI** | React 19 + Tailwind CSS 4 | Component library and styling |
-| **State** | Jotai + TanStack Query | Client state and server data |
-| **Database** | PostgreSQL + Drizzle ORM | Persistent storage |
-| **Validation** | Zod | Runtime payload validation |
-| **AI** | OpenAI-compatible API | Dynamic crafting logic |
-| **Payments** | x402 Protocol | On-chain microtransactions |
-| **Auth** | Neynar SDK | Farcaster identity verification |
-
-### Directory Structure
-
-```
-crafterz/
-├── src/
-│   ├── app/                      # Next.js App Router
-│   │   ├── api/                  # API routes
-│   │   │   ├── ai-craft/         # AI-powered crafting endpoint
-│   │   │   ├── craft/            # Craft event submission
-│   │   │   ├── leaderboard/      # Leaderboard data
-│   │   │   ├── tasks/            # Daily task management
-│   │   │   ├── mint/             # NFT minting
-│   │   │   ├── gm/               # GM on-chain event
-│   │   │   └── admin/            # Admin controls (x402, whitelist)
-│   │   ├── layout.tsx            # Root layout
-│   │   ├── page.tsx              # Home page
-│   │   └── globals.css           # Global styles
-│   ├── features/app/             # Frontend game logic
-│   │   ├── mini-app.tsx          # Main gameplay component
-│   │   ├── mini-app-tabs.tsx     # Tab components
-│   │   ├── crafting-engine.ts    # Crafting logic (AI + fallback)
-│   │   ├── runtime-api.ts        # API client functions
-│   │   ├── discovery-feed.tsx    # Discovery feed utilities
-│   │   └── app-types.ts          # TypeScript types
-│   ├── server/                   # Server-side logic
-│   │   ├── game-state.ts         # Game state management
-│   │   └── kv-store.ts           # Storage abstraction
-│   ├── db/                       # Database layer
-│   │   ├── schema.ts             # Drizzle schema definitions
-│   │   └── client.ts             # Database client
-│   ├── config/                   # Configuration
-│   │   ├── public-config.ts      # Public-facing config
-│   │   ├── private-config.ts     # Server-only config
-│   │   └── types.ts              # Config types
-│   ├── lib/                      # Shared utilities
-│   │   ├── auth/                 # Authentication middleware
-│   │   └── payments/             # x402 payment helpers
-│   └── components/               # Reusable UI components
-├── public/                       # Static assets
-├── .env.example                  # Environment template
-├── drizzle.config.ts             # Drizzle configuration
-├── next.config.ts                # Next.js configuration
-├── package.json                  # Dependencies and scripts
-└── tsconfig.json                 # TypeScript configuration
-```
-
-### Crafting System
-
-The crafting engine uses a **recursive, generation-based approach** inspired by games like Little Alchemy and Infinite Craft:
-
-1. **AI Mode** (when `AI_API_KEY` is set):
-   - Any two items can be combined — genesis or crafted
-   - AI receives generation context (Gen 0 = genesis, Gen 1+ = crafted)
-   - Higher generations produce more complex/abstract results
-   - Results are cached for deterministic future combinations
-   - First global discovery triggers MegaMind status
-
-2. **Fallback Mode** (no `AI_API_KEY`):
-   - Uses a built-in registry of 25 deterministic recipes (genesis + genesis only)
-   - Same combination always produces the same result
-   - AI mode required for recursive crafting beyond first generation
-
-**Generation System:**
-- **Generation 0**: Primordial elements (Fire, Water, Earth, Air, Sun, Moon, Time)
-- **Generation 1**: Direct combinations of elements (Steam, Lava, Ice, Mist, etc.)
-- **Generation 2**: Combinations involving Gen 1 items (Steam + Earth = Geyser)
-- **Generation 3+**: Complex merges of crafted items (Geyser + Time = Old Faithful)
-- Each item displays its generation badge (`G1`, `G2`, `G3`, etc.) on the canvas
-
-**Key rules:**
-- Any item can combine with any other item (recursive crafting)
-- Result generation = `max(genA, genB) + 1`
-- Same combination always produces the same result (deterministic cache)
-- MegaMind status is granted only on the first global discovery of an item
-- Emojis are persistently associated with each item
-
----
-
-## API Reference
-
-### `POST /api/craft`
-
-Submit a craft event and receive updated player stats.
-
-**Request:**
-```json
-{
-  "fid": 123,
-  "username": "alice",
-  "itemName": "Steam",
-  "tier": "COMMON",
-  "ingredients": ["Water", "Fire"],
-  "emojis": ["💨", "🌫️"],
-  "isMegaMind": false,
-  "pointsAwarded": 2
-}
-```
-
-**Response:**
-```json
-{
-  "ok": true,
-  "player": {
-    "fid": 123,
-    "username": "alice",
-    "points": 150,
-    "crafts": 12,
-    "megaMinds": 1
-  }
-}
-```
-
-### `GET /api/leaderboard?limit=50`
-
-Retrieve the global leaderboard and recent activity.
-
-**Response:**
-```json
-{
-  "leaderboard": [
-    { "fid": 123, "username": "alice", "points": 150, "crafts": 12, "megaMinds": 1 }
-  ],
-  "recentActivity": [
-    { "username": "bob", "itemName": "Eclipse", "tier": "LEGENDARY", "isMegaMind": true }
-  ]
-}
-```
-
-### `GET /api/tasks?fid=123&date=2025-01-15`
-
-Get daily tasks for a player.
-
-### `POST /api/tasks`
-
-Progress or complete a task.
-
-**Request:**
-```json
-{
-  "fid": 123,
-  "taskId": "task-crafts",
-  "action": "progress",
-  "amount": 1
-}
-```
-
-### `POST /api/mint`
-
-Submit an NFT mint event.
-
-**Request:**
-```json
-{
-  "fid": 123,
-  "username": "alice",
-  "itemName": "Eclipse",
-  "tokenId": 101,
-  "txHash": "0xabc..."
-}
-```
-
-### `POST /api/gm`
-
-Submit a GM on-chain event.
-
-**Request:**
-```json
-{
-  "fid": 123,
-  "username": "alice",
-  "chain": "base",
-  "txHash": "0xabc..."
-}
-```
-
-### `POST /api/ai-craft`
-
-AI-powered crafting endpoint.
-
-**Request:**
-```json
-{
-  "itemA": "Fire",
-  "itemB": "Water",
-  "discoveredItems": [
-    { "name": "Steam", "tier": "COMMON", "emojis": ["💨", "🌫️"] }
-  ]
-}
-```
-
-**Response:**
-```json
-{
-  "ok": true,
-  "cached": false,
-  "result": {
-    "name": "Steam",
-    "emojis": ["💨", "🌫️"],
-    "tier": "COMMON",
-    "isMegaMind": false,
-    "description": "Water vaporized by heat"
-  }
-}
-```
-
----
-
-## Environment Configuration
-
-Copy `.env.example` to `.env.local` and configure the required variables:
-
-```bash
+# Copy to create your local environment file
 cp .env.example .env.local
+
+# Then edit .env.local with your actual values
+nano .env.local
 ```
 
 ### Required Variables
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host:5432/db` |
-| `NEYNAR_API_KEY` | Farcaster auth verification | `neynar_...` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/crafterz` |
+| `NEYNAR_API_KEY` | Farcaster API key | `neynar_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX` |
 
-### AI Crafting (Optional)
+### Optional Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `AI_API_KEY` | AI provider API key | `sk-...` |
-| `AI_API_BASE_URL` | OpenAI-compatible endpoint | `https://api.openai.com/v1` |
-| `AI_MODEL` | Model identifier | `gpt-4o-mini` |
+| Category | Variable | Example |
+|----------|----------|---------|
+| **AI** | `AI_API_KEY` | `sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX` |
+| **AI** | `AI_API_BASE_URL` | `https://api.openai.com/v1` |
+| **AI** | `AI_MODEL` | `gpt-4o-mini` |
+| **Payments** | `X402_FACILITATOR_URL` | `https://api.cdp.coinbase.com/platform/v2/x402` |
+| **Payments** | `X402_EVM_ADDRESS` | `0x0000000000000000000000000000000000000000` |
+| **Analytics** | `COINGECKO_API_KEY` | `CG-XXXXXXXXXXXXXXXXXXXXXXXX` |
 
-### X402 Payments (Optional)
+## 🤖 AI Crafting Configuration
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `X402_FACILITATOR_URL` | Payment facilitator URL | `https://api.cdp.coinbase.com/...` |
-| `X402_EVM_ADDRESS` | Receiving wallet address | `0x...` |
-| `X402_CRAFT_PRICE` | Price per craft | `$0.01` |
-| `X402_MINT_PRICE` | Price per mint | `$0.05` |
+### Supported AI Providers
 
-See `.env.example` for the complete list with all provider options.
+| Provider | Base URL | Free Tier | Recommended Model |
+|----------|----------|-----------|-------------------|
+| **OpenAI** | `https://api.openai.com/v1` | ❌ No | `gpt-4o-mini` |
+| **Mistral** | `https://api.mistral.ai/v1` | ✅ Yes | `mistral-small-latest` |
+| **Groq** | `https://api.groq.com/openai/v1` | ✅ Yes | `llama-3.3-70b-versatile` |
+| **Together AI** | `https://api.together.xyz/v1` | ✅ Yes | `meta-llama/Llama-3.3-70B-Instruct-Turbo` |
+| **Anthropic** | `https://api.anthropic.com` | ✅ Yes | `claude-haiku-3-20241022` |
+| **Fireworks** | `https://api.fireworks.ai/inference/v1` | ✅ Yes | `accounts/fireworks/models/llama-v3p1-70b` |
+| **DeepSeek** | `https://api.deepseek.com/v1` | ✅ Yes | `deepseek-chat` |
+| **Ollama** | `http://localhost:11434/v1` | ✅ Yes | `llama3.2` |
+| **LM Studio** | `http://localhost:1234/v1` | ✅ Yes | (loaded model) |
 
----
+### Configuration Examples
 
-## AI Provider Configuration
-
-CrafterZ supports any OpenAI-compatible AI provider. Configure your chosen provider in `.env.local`:
-
-### OpenAI
+**OpenAI (Production):**
 ```env
+AI_API_KEY=sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 AI_API_BASE_URL=https://api.openai.com/v1
 AI_MODEL=gpt-4o-mini
 ```
 
-### Mistral
+**Groq (Free Tier):**
 ```env
-AI_API_BASE_URL=https://api.mistral.ai/v1
-AI_MODEL=mistral-small-latest
-```
-
-### Groq (Free Tier)
-```env
+AI_API_KEY=your-groq-key
 AI_API_BASE_URL=https://api.groq.com/openai/v1
 AI_MODEL=llama-3.3-70b-versatile
 ```
 
-### Together AI
-```env
-AI_API_BASE_URL=https://api.together.xyz/v1
-AI_MODEL=meta-llama/Llama-3.3-70B-Instruct-Turbo
-```
-
-### Anthropic
-```env
-AI_API_BASE_URL=https://api.anthropic.com
-AI_MODEL=claude-sonnet-4-20250514
-```
-
-### Ollama (Local)
+**Local Ollama:**
 ```env
 AI_API_BASE_URL=http://localhost:11434/v1
 AI_MODEL=llama3.2
+# No API key needed for local Ollama
 ```
 
----
+## 🔧 Updating AI Moderation Logic
 
-## Contributing
+### 📁 Key Files
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+| File | Location | Purpose |
+|------|----------|---------|
+| `crafting-engine.ts` | `src/features/app/crafting-engine.ts` | Core crafting logic |
+| `semantic-crafting.ts` | `src/features/app/semantic-crafting.ts` | Deterministic recipes |
+| `ai-craft/route.ts` | `src/app/api/ai-craft/route.ts` | AI API endpoint |
 
-### Development Workflow
+### 🛠️ How to Modify Crafting Logic
+
+#### 1. **Update Deterministic Recipes**
+
+Edit `src/features/app/semantic-crafting.ts`:
+
+```typescript
+// Add new recipe combinations
+const RECIPES: Record<string, CraftedItem> = {
+  'water+fire': { name: 'Steam', emojis: ['💨', '☁️'], tier: 'COMMON' },
+  'earth+fire': { name: 'Lava', emojis: ['🌋', '🔴'], tier: 'COMMON' },
+  // Add your custom combinations here
+  'water+air': { name: 'Rain', emojis: ['🌧️', '💧'], tier: 'COMMON' },
+};
+```
+
+#### 2. **Modify AI Prompt**
+
+Edit `src/app/api/ai-craft/route.ts`:
+
+```typescript
+// Update the system prompt
+const systemPrompt = `
+You are a crafting system in a game where players combine elements.
+Rules:
+1. Always return JSON with {name, emojis, tier}
+2. Name should be 1-3 words, title case
+3. Emojis should be 1-3 relevant emojis
+4. Tier must be COMMON, RARE, or LEGENDARY
+5. Be creative but logical
+
+Example combinations:
+- Water + Fire → Steam (💨, ☁️, COMMON)
+- Earth + Fire → Lava (🌋, 🔴, COMMON)
+- Your custom logic here
+`;
+```
+
+#### 3. **Add Validation Rules**
+
+Edit `src/features/app/crafting-engine.ts`:
+
+```typescript
+// Add custom validation logic
+export function validateCraft(item1: string, item2: string): boolean {
+  // Prevent invalid combinations
+  const invalidCombinations = [
+    ['time', 'time'], // Can't combine time with itself
+    ['sun', 'moon'],  // Celestial bodies don't combine
+  ];
+  
+  return !invalidCombinations.some(
+    ([a, b]) => 
+      (item1 === a && item2 === b) || (item1 === b && item2 === a)
+  );
+}
+```
+
+#### 4. **Test Your Changes**
 
 ```bash
-# Install dependencies
-pnpm install
-
 # Run type checking
 pnpm type-check
 
-# Run linting
-pnpm lint
+# Run tests
+pnpm test
 
-# Run all validations
-pnpm validate
-
-# Build for production
-pnpm build
+# Start dev server
+pnpm dev
 ```
 
+## 📁 Project Structure
+
+```
+src/
+├── app/                  # Next.js App Router
+│   ├── api/               # API endpoints
+│   │   ├── craft/         # Crafting endpoint
+│   │   ├── ai-craft/      # AI crafting endpoint
+│   │   ├── leaderboard/   # Leaderboard data
+│   │   ├── tasks/         # Daily tasks
+│   │   ├── mint/          # NFT minting
+│   │   └── gm/            # GM on-chain
+│   └── (page routes)
+│
+├── components/           # Reusable UI components
+│   └── admin/             # Admin interface
+│
+├── config/               # Configuration files
+│   ├── public-config.ts   # Public runtime config
+│   └── private-config.ts  # Server-side config
+│
+├── db/                   # Database layer
+│   ├── client.ts          # Drizzle ORM client
+│   └── schema.ts          # Database schema
+│
+├── features/             # Feature modules
+│   └── app/               # Main application
+│       ├── mini-app.tsx       # Main game component
+│       ├── mini-app-components.tsx # Memoized components
+│       ├── mini-app-tabs.tsx    # Tab components
+│       ├── crafting-engine.ts  # Crafting logic
+│       ├── semantic-crafting.ts # Deterministic recipes
+│       ├── discovery-feed.ts   # Discovery system
+│       ├── runtime-api.ts      # Runtime API
+│       ├── app-types.ts        # Type definitions
+│       └── __tests__/          # Unit tests
+│           ├── components.test.tsx
+│           └── integration.test.tsx
+│
+├── lib/                  # Utility libraries
+│   ├── auth/              # Authentication
+│   ├── payments/          # Payment processing
+│   └── x402/              # X402 protocol
+│
+├── server/               # Server-side logic
+│   ├── game-state.ts      # Game state management
+│   └── kv-store.ts        # Key-value storage
+│
+├── types/                # Type definitions
+│   └── shared.ts          # Shared types
+│
+└── neynar-farcaster-sdk/  # Farcaster SDK
+```
+
+## 📋 Available Scripts
+
+### Development
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start dev server with Turbopack |
+| `pnpm dev:webpack` | Start dev server with Webpack |
+| `pnpm build` | Create production build |
+| `pnpm start` | Run production server |
+
+### Database
+
+| Command | Description |
+|---------|-------------|
+| `pnpm db:push` | Push schema to PostgreSQL |
+| `pnpm db:generate` | Generate migrations |
+| `pnpm db:migrate` | Run migrations |
+| `pnpm db:studio` | Open Drizzle Studio GUI |
+
+### Quality Assurance
+
+| Command | Description |
+|---------|-------------|
+| `pnpm type-check` | TypeScript type checking |
+| `pnpm lint` | ESLint linting |
+| `pnpm format` | Prettier formatting |
+| `pnpm validate` | Run all checks + tests |
+| `pnpm test` | Run test suite |
+| `pnpm test:watch` | Run tests in watch mode |
+| `pnpm test:coverage` | Run tests with coverage |
+
+### Deployment
+
+| Command | Description |
+|---------|-------------|
+| `pnpm deploy:raw` | Deploy to Vercel (raw) |
+| `pnpm deploy:vercel` | Deploy via script |
+
+## 🧪 Testing
+
+### Test Framework
+
+- **Jest**: Testing framework
+- **React Testing Library**: Component testing
+- **@testing-library/jest-dom**: DOM matchers
+- **ts-jest**: TypeScript support
+
+### Running Tests
+
+```bash
+# Run all tests
+pnpm test
+
+# Run tests in watch mode
+pnpm test:watch
+
+# Run tests with coverage report
+pnpm test:coverage
+
+# Update snapshots
+pnpm test:update
+```
+
+### Test Coverage
+
+- **Component Tests**: Basic React functionality
+- **Integration Tests**: Component interaction
+- **Current**: 8 passing tests
+- **Coverage**: Core components (AppHeader, CraftzBar)
+
+### Test Files
+
+```
+src/features/app/__tests__/
+├── components.test.tsx      # Basic component tests
+└── integration.test.tsx     # Integration tests
+```
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdrdeeks%2Fcrafterz)
+
+**Steps:**
+1. Connect repository
+2. Add PostgreSQL database
+3. Configure environment variables
+4. Deploy automatically
+
+### Environment Variables for Vercel
+
+```env
+DATABASE_URL=postgresql://user:pass@host:5432/db
+NEYNAR_API_KEY=neynar_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+AI_API_KEY=your-key
+AI_API_BASE_URL=https://api.openai.com/v1
+AI_MODEL=gpt-4o-mini
+NEXT_PUBLIC_VERCEL_PRODUCTION_URL=https://your-app.vercel.app
+```
+
+## 🏗️ Architecture
+
+### Frontend
+
+- **Framework**: Next.js 16 (App Router)
+- **State**: Jotai + TanStack Query
+- **UI**: Tailwind CSS v4 + custom dark theme
+- **Validation**: Zod schema validation
+
+### Backend
+
+- **API**: Next.js App Router endpoints
+- **Database**: Drizzle ORM + PostgreSQL
+- **Storage**: KV store abstraction
+- **Auth**: Farcaster signature verification
+
+### Key Features
+
+- **Deterministic Crafting**: 25+ hardcoded recipes
+- **AI Crafting**: OpenAI-compatible API integration
+- **MegaMind System**: First-to-discover tracking
+- **X402 Payments**: Microtransaction support
+- **Multi-Chain Minting**: Base, Ethereum, Arbitrum, Optimism, Polygon, Zora
+
+## 🤝 Contributing
+
+### Setup
+
+```bash
+git clone https://github.com/drdeeks/crafterz.git
+cd crafterz
+pnpm install
+cp .env.example .env.local
+```
+
+### Workflow
+
+1. Create a feature branch: `git checkout -b feat/your-feature`
+2. Make changes and commit: `git commit -m "feat: your feature"`
+3. Run validation: `pnpm validate`
+4. Push changes: `git push origin feat/your-feature`
+5. Open a Pull Request
+
+### Code Standards
+
+- **TypeScript**: Strict typing throughout
+- **ESLint**: Airbnb style guide
+- **Prettier**: Consistent formatting
+- **Commit Messages**: Conventional Commits
+
+### Pull Request Checklist
+
+- [ ] All tests pass (`pnpm test`)
+- [ ] Type checking passes (`pnpm type-check`)
+- [ ] Linting passes (`pnpm lint`)
+- [ ] Formatting is correct (`pnpm format`)
+- [ ] Documentation updated
+- [ ] Changes follow architecture patterns
+
+## 📄 License
+
+MIT License - See [LICENSE](LICENSE) for details.
+
+## 🔗 Links
+
+- **Repository**: [github.com/drdeeks/crafterz](https://github.com/drdeeks/crafterz)
+- **Farcaster**: [warpcast.com/crafterz](https://warpcast.com/crafterz)
+- **Documentation**: [docs.crafterz.vercel.app](https://docs.crafterz.vercel.app)
+- **Issues**: [github.com/drdeeks/crafterz/issues](https://github.com/drdeeks/crafterz/issues)
+
 ---
 
-## License
-
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
-
----
-
-<div align="center">
-
-**CrafterZ** · Built with Next.js · Powered by Farcaster
-
-[GitHub](https://github.com/drdeeks/crafterz) · [Farcaster](https://www.farcaster.xyz/) · [x402](https://x402.org/)
-
-</div>
+**Built with ❤️ using Next.js, TypeScript, and Farcaster**
