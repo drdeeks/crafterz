@@ -28,7 +28,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:update": "jest -u",
-    "test:ci": "jest --runInBand --coverage --maxWorkers=2"
+    "test:ci": "jest --runInBand --coverage --maxWorkers=2",
+    "test:coverage:check": "jest --coverage --coverageThreshold='{\"global\":{\"branches\":80,\"functions\":85,\"lines\":85,\"statements\":85}}'"
   },
   "dependencies": {
     "@coingecko/coingecko-typescript": "1.11.3",
