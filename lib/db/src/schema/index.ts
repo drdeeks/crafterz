@@ -17,4 +17,9 @@
 //   export type InsertPost = z.infer<typeof insertPostSchema>;
 //   export type Post = typeof postsTable.$inferSelect;
 
-export {}
+import { pgTable, text } from "drizzle-orm/pg-core";
+
+export const kv = pgTable("kv", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+});

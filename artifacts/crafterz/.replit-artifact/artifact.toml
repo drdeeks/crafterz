@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "CrafterZ"
+version = "1.0.0"
+id = "artifacts/crafterz"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25512
+
+[services.development]
+run = "pnpm --filter @workspace/crafterz run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/crafterz", "run", "build" ]
+publicDir = "artifacts/crafterz/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25512"
+BASE_PATH = "/"

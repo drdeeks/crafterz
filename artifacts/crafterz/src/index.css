@@ -1,0 +1,110 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: var(--app-font-sans);
+  --font-mono: var(--app-font-mono);
+}
+
+:root {
+  --app-font-sans: 'Geist', system-ui, sans-serif;
+  --app-font-mono: 'Geist Mono', monospace;
+  --font-caveat: 'Caveat', cursive;
+  --font-patrick-hand: 'Patrick Hand', cursive;
+  --font-geist-sans: 'Geist', system-ui, sans-serif;
+  --font-geist-mono: 'Geist Mono', monospace;
+  --font-sketch: var(--font-geist-sans), sans-serif;
+
+  --primary: #f59e0b;
+  --accent: #a855f7;
+  --background: #09090b;
+  --foreground: #fafafa;
+
+  --sketch-roughness: 0px;
+  --sketch-shadow: none;
+  --sketch-border: 1px solid rgba(255,255,255,0.1);
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background-color: #09090b !important;
+  color: #fafafa !important;
+  font-family: var(--app-font-sans);
+}
+
+.dark {
+  --primary: #9333ea;
+  --accent: #06b6d4;
+  --background: #1a1a2e;
+  --foreground: #ffffff;
+}
+
+.sketch {
+  position: relative;
+}
+
+.sketch-wobbly {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #18181b;
+  color: #fafafa;
+  border-radius: 0.75rem;
+}
+
+.sketch-border {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+}
+
+.sketch-border-heavy {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.75rem;
+}
+
+.sketch-text {
+  font-family: var(--font-sans);
+  letter-spacing: 0em;
+  color: #a1a1aa;
+}
+
+.sketch-button {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 0.625rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.15s ease;
+  position: relative;
+  background: #27272a;
+  color: #fafafa;
+  padding: 0.5rem 1rem;
+}
+
+.sketch-button:hover {
+  background: #3f3f46;
+  border-color: rgba(255,255,255,0.25);
+}
+
+@keyframes bounce-in {
+  0% { transform: translateX(20px); opacity: 0; }
+  60% { transform: translateX(-4px); }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.3s ease-out forwards;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+}
