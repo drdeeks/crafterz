@@ -1,63 +1,49 @@
-# =============================================================================
-# CrafterZ — Git Ignore Rules
-# =============================================================================
-# Enterprise-optimized .gitignore for Next.js + TypeScript + Drizzle ORM
-# =============================================================================
+# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
-# ── Dependencies ──────────────────────────────────────────────────────────────
-node_modules/
-.pnp
-.pnp.js
+# compiled output
+dist
+tmp
+out-tsc
+*.tsbuildinfo
+.expo
+.expo-shared
 
-# ── Build Artifacts ──────────────────────────────────────────────────────────
-.next/
-out/
-dist/
-build/
+# dependencies
+node_modules
 
-# ── Environment ──────────────────────────────────────────────────────────────
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-!.env.example
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
-# ── Logs & Debug ──────────────────────────────────────────────────────────────
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-*.log
-
-# ── IDE & Editor ──────────────────────────────────────────────────────────────
+# IDE - VSCode
 .vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
 !.vscode/extensions.json
-.idea/
-*.swp
-*.swo
-*~
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
 .DS_Store
 Thumbs.db
 
-# ── TypeScript ────────────────────────────────────────────────────────────────
-*.tsbuildinfo
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
 
-# ── Testing ───────────────────────────────────────────────────────────────────
-coverage/
-.turbo/
-
-# ── Deployment ──────────────────────────────────────────────────────────────
-.vercel
-
-# ── Temporary & Backup ────────────────────────────────────────────────────────
-*.bak
-*.orig
-*.tmp
-
-# ── Security ──────────────────────────────────────────────────────────────────
-# Never commit secrets or keys
-# Use environment variables instead
-# =============================================================================
-# End of .gitignore
-# =============================================================================
+# Replit
+.cache/
+.local/
