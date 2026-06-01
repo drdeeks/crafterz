@@ -33,7 +33,8 @@ Each feature is designed as an **autonomous micro-service** — independently de
 
 ### 1.2 Non-Negotiables
 
-- All on-chain interactions require an explicit user wallet-confirmation step — no invisible transactions.
+- **User-initiated on-chain actions** (NFT minting, ownership transfers, large ETH sends) require explicit wallet confirmation — these are irreversible and must not happen silently.
+- **Agent-autonomous micro-transactions** (heist entry fees, Brain Rental payments, Weather event rewards, x402 cross-agent settlements) execute autonomously via the [x402 payment protocol](https://x402.org) without per-transaction user interruption. Users grant authorization once at the feature level (e.g., tapping "Hire Agent" or "Launch Heist"); the agent resolves all downstream micro-payments independently. This is the correct model for machine-to-machine payments — requiring wallet confirmation on every agent step would make the product unusable.
 - All AI-generated content must pass a content moderation filter before being stored or displayed.
 - No feature may read or write another feature's private tables directly — cross-feature communication uses shared game events or the public API layer.
 - Every new DB migration ships with a down-migration and a rollback runbook.

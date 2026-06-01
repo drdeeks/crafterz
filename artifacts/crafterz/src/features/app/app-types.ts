@@ -33,7 +33,7 @@ export type AppDailyTask = Omit<ServerTask, 'updatedAt'> & {
 };
 export type AppDailyTaskType = ServerTask['type'];
 
-export type AppTab = 'inventory' | 'megaminds' | 'tasks' | 'leaderboard' | 'admin';
+export type AppTab = 'inventory' | 'megaminds' | 'tasks' | 'leaderboard' | 'agents' | 'admin';
 export type AppMintPhase = 'prompt' | 'connecting' | 'minting' | 'done';
 
 export type EvmChainOption = {

@@ -4,7 +4,7 @@ import type { DiscoveredItem } from '../crafting-engine';
 import { postCraftEvent } from '../runtime-api';
 import type { AppInventoryItem, AppCanvasItem, AppDailyTaskType } from '../app-types';
 import { newId, tierPoints } from '../helpers';
-import { CRAFTZ_COST, PTS, INITIAL_INVENTORY } from '../constants';
+import { CRAFTZ_COST, CRAFTZ_MAX, PTS, INITIAL_INVENTORY } from '../constants';
 import type { ServerPlayer } from '../runtime-api';
 
 export interface UseCraftingOptions {
@@ -149,6 +149,8 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
 
             if (!crafted) {
               setCombining(null);
+              // Strict policy: refund full Craftz cost when no result is produced
+              setCraftz((c) => { const next = Math.min(CRAFTZ_MAX, c + CRAFTZ_COST); craftzRef.current = next; return next; });
               setCanvasItems((curr) => curr.map((i) => i.instanceId === instanceId ? { ...i, x: finalX, y: finalY, isDragging: false } : i));
               return;
             }

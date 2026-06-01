@@ -12,6 +12,7 @@ import {
   type AgentID,
 } from "../lib/game-state.js";
 import { readJson, writeJson } from "../lib/kv-store.js";
+import { generateCaption } from "../lib/caption-state.js";
 
 const router = Router();
 
@@ -114,6 +115,17 @@ router.post("/craft", async (req, res) => {
 
     const { player, awardedPoints } = await recordCraft(parsed.data);
     res.json({ ok: true, player, awardedPoints });
+
+    // Fire-and-forget comedy caption generation (MegaMinds always get one; 25% chance for others)
+    if (parsed.data.isMegaMind || Math.random() < 0.25) {
+      generateCaption({
+        itemName: parsed.data.itemName,
+        discovererUsername: parsed.data.username ?? "CrafterZ",
+        tier: parsed.data.tier,
+        ingredients: parsed.data.ingredients ?? [],
+        isMegaMind: Boolean(parsed.data.isMegaMind),
+      }).catch((err: unknown) => console.error("Caption generation error:", err));
+    }
   } catch (err) {
     console.error("Craft POST error:", err);
     res.status(500).json({ ok: false, error: "Internal server error" });

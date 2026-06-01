@@ -1,22 +1,48 @@
+import { useState } from 'react';
 import type { DiscoveryFeedItem } from '../discovery-feed';
 import type { EmojiRenderer, PointsConfig } from '../app-types';
 import type { LeaderboardRow } from '../hooks/use-server-sync';
+import type { ServerCaption } from '../runtime-api';
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
 
 export function LeaderboardTab({
   myRank,
   leaderboardData,
   recentDiscoveries,
+  captions,
   renderEmojis,
   tierBadge,
   points,
+  onReactCaption,
+  onReportCaption,
 }: {
   myRank: number | string;
   leaderboardData: LeaderboardRow[];
   recentDiscoveries: DiscoveryFeedItem[];
+  captions: ServerCaption[];
   renderEmojis: EmojiRenderer;
   tierBadge: Record<string, string>;
   points: PointsConfig;
+  onReactCaption: (id: string) => void;
+  onReportCaption: (id: string) => void;
 }) {
+  const [reactedIds, setReactedIds] = useState<Set<string>>(new Set());
+
+  function handleReact(id: string) {
+    if (reactedIds.has(id)) return;
+    setReactedIds((prev) => new Set([...prev, id]));
+    onReactCaption(id);
+  }
+
   return (
     <div className="p-3 space-y-2">
       <div className="flex items-center justify-between px-1 mb-3">
@@ -77,6 +103,50 @@ export function LeaderboardTab({
           ))}
         </div>
       </div>
+
+      {captions.length > 0 && (
+        <div className="mt-5">
+          <div className="flex items-center gap-2 px-1 mb-2">
+            <p className="text-zinc-500 text-[10px] uppercase tracking-wider">📰 Crafterz Gazette</p>
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25 font-bold">AI</span>
+          </div>
+          <div className="space-y-2">
+            {captions.map((caption) => (
+              <div key={caption.id} className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-3">
+                <div className="flex items-start gap-2 mb-2">
+                  <span className="text-base leading-none flex-shrink-0 mt-0.5">📰</span>
+                  <p className="text-zinc-200 text-xs leading-relaxed flex-1">{caption.captionText}</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${tierBadge[caption.tier] ?? 'bg-zinc-800 text-zinc-400'}`}>{caption.tier}</span>
+                    <span className="text-zinc-600 text-[10px]">{caption.itemName}</span>
+                    {caption.isAiGenerated && <span className="text-[9px] text-purple-500">✦ AI</span>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-zinc-600 text-[10px]">{timeAgo(caption.createdAt)}</span>
+                    <button
+                      onClick={() => handleReact(caption.id)}
+                      className={`text-xs transition-colors ${reactedIds.has(caption.id) ? 'text-amber-400' : 'text-zinc-600 hover:text-amber-400'}`}
+                      title="Ha-ha!"
+                    >
+                      🤣 {caption.hahCount > 0 ? caption.hahCount : ''}
+                    </button>
+                    <button
+                      onClick={() => onReportCaption(caption.id)}
+                      className="text-[10px] text-zinc-700 hover:text-red-500 transition-colors"
+                      title="Report"
+                    >
+                      🚩
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="pb-4" />
     </div>
   );

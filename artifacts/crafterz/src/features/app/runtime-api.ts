@@ -53,6 +53,44 @@ export type ServerTask = {
   updatedAt: string;
 };
 
+export type ServerCaption = {
+  id: string;
+  itemName: string;
+  discovererUsername: string;
+  tier: string;
+  ingredients: string[];
+  captionText: string;
+  isAiGenerated: boolean;
+  hahCount: number;
+  reportCount: number;
+  isSuppressed: boolean;
+  createdAt: string;
+};
+
+export type ServerHeist = {
+  id: string;
+  challengerFid: number;
+  defenderFid: number | null;
+  defenderUsername: string;
+  targetItemName: string;
+  targetItemEmojis: string[];
+  targetItemTier: string;
+  status: string;
+  entryCraftz: number;
+  challengerItemName?: string;
+  challengerItemTier?: string;
+  defenderItemName?: string;
+  defenderItemTier?: string;
+  challengerScore?: number;
+  defenderScore?: number;
+  winnerFid: number | null;
+  pointsAwarded: number;
+  rivalryTokenEarned: boolean;
+  paymentMethod: string;
+  createdAt: string;
+  resolvedAt?: string;
+};
+
 type LeaderboardResponse = {
   ok: boolean;
   leaderboard: ServerPlayer[];
@@ -211,4 +249,50 @@ export async function postGmEvent(input: {
   });
 
   return response?.ok ? response.player ?? null : null;
+}
+
+// ─── Captions (Comedy Feed) ──────────────────────────────────────────────────
+
+export async function fetchCaptions(limit = 20) {
+  const response = await requestJson<{ ok: boolean; captions: ServerCaption[] }>(
+    `/api/captions?limit=${limit}`,
+  );
+  return response?.ok ? response.captions : [];
+}
+
+export async function reactToCaption(id: string) {
+  await requestJson<{ ok: boolean }>(`/api/captions/${id}/react`, { method: "POST", body: "{}" });
+}
+
+export async function reportCaption(id: string) {
+  await requestJson<{ ok: boolean }>(`/api/captions/${id}/report`, { method: "POST", body: "{}" });
+}
+
+// ─── Heists ──────────────────────────────────────────────────────────────────
+
+export async function initiateHeist(input: {
+  challengerFid: number;
+  defenderFid: number | null;
+  defenderUsername: string;
+  targetItemName: string;
+  targetItemEmojis: string[];
+  targetItemTier: string;
+  entryCraftz: number;
+  challengerItemName: string;
+  challengerItemTier: string;
+  challengerItemGeneration: number;
+  paymentMethod?: "craftz" | "x402";
+}) {
+  const response = await requestJson<{ ok: boolean; heist: ServerHeist; pointsAwarded: number }>(
+    "/api/heists/initiate",
+    { method: "POST", body: JSON.stringify(input) },
+  );
+  return response?.ok ? response : null;
+}
+
+export async function fetchHeists(fid: number) {
+  const response = await requestJson<{ ok: boolean; heists: ServerHeist[] }>(
+    `/api/heists?fid=${fid}`,
+  );
+  return response?.ok ? response.heists : [];
 }
