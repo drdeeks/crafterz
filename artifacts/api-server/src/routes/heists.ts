@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { initiateHeist, getHeist, getHeistsByFid } from "../lib/heist-state.js";
 import { isEnabled } from "../lib/feature-flags.js";
+import { pushFeedEvent } from "../lib/feed-state.js";
 
 const router = Router();
 
@@ -36,6 +37,23 @@ router.post("/heists/initiate", async (req, res) => {
     }
 
     res.json({ ok: true, heist: result.heist, pointsAwarded: result.pointsAwarded });
+
+    // Fire-and-forget: push heist result to the live feed
+    const h = result.heist;
+    const won = h.result === "challenger_wins";
+    pushFeedEvent({
+      kind: won ? "heist_win" : "heist_loss",
+      timestamp: new Date().toISOString(),
+      actorUsername: `fid:${h.challengerFid}`,
+      actorPortrait: "⚔️",
+      headline: won
+        ? `⚔️ Heist successful! ${h.challengerItemName} defeated ${h.defenderUsername}'s ${h.targetItemName}`
+        : `🛡️ Heist repelled! ${h.defenderUsername}'s ${h.targetItemName} held off the challenge`,
+      detail: won
+        ? `+${result.pointsAwarded} pts · Rivalry token earned`
+        : `${h.targetItemName} defends its throne`,
+      tier: h.targetItemTier,
+    }).catch((err: unknown) => console.error("Heist feed push error:", err));
   } catch (err) {
     console.error("Heist initiate error:", err);
     res.status(500).json({ ok: false, error: "Internal server error" });

@@ -5,6 +5,7 @@ import heistsRouter from "./heists.js";
 import agentsRouter from "./agents.js";
 import weatherRouter from "./weather.js";
 import captionsRouter from "./captions.js";
+import feedRouter from "./feed.js";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(heistsRouter);
 router.use(agentsRouter);
 router.use(weatherRouter);
 router.use(captionsRouter);
+router.use(feedRouter);
 
 export default router;

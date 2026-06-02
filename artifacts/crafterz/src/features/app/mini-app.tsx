@@ -8,6 +8,7 @@ import {
 } from './runtime-api';
 import type { AppInventoryItem, AppTab } from './app-types';
 import type { ServerCaption, ServerHeist } from './runtime-api';
+import { useFeed } from './hooks/use-feed';
 import { TIER_BADGE, EVM_CHAINS, CRAFTZ_COST, CRAFTZ_MAX, PTS } from './constants';
 import { renderEmojis, starColor } from './helpers';
 import { useCraftz } from './hooks/use-craftz';
@@ -19,7 +20,7 @@ import { useCrafting } from './hooks/use-crafting';
 import { useWeather } from './hooks/use-weather';
 import { useAgents } from './hooks/use-agents';
 import { AppHeader, CraftingCanvas, CraftzBar } from './mini-app-components';
-import { InventoryTab, MegaMindsTab, TasksTab, LeaderboardTab, AdminTab, AgentsTab } from './tabs';
+import { InventoryTab, MegaMindsTab, TasksTab, LeaderboardTab, FeedTab, AdminTab, AgentsTab } from './tabs';
 
 export function MiniApp() {
   const [activeTab, setActiveTab] = useState<AppTab>('inventory');
@@ -32,6 +33,7 @@ export function MiniApp() {
   const { craftz, craftzRef, setCraftz } = useCraftz();
   const { currentEvent: weatherEvent } = useWeather();
   const agentsState = useAgents();
+  const { events: feedEvents, loading: feedLoading } = useFeed(activeTab === 'feed');
 
   const {
     myPoints, setMyPoints,
@@ -78,9 +80,9 @@ export function MiniApp() {
     onRefreshServerSnapshot: refreshServerSnapshot,
   });
 
-  // ─── Comedy feed: fetch when leaderboard tab opens ──────────────────────────
+  // ─── Comedy feed: fetch when feed tab opens ────────────────────────────────
   useEffect(() => {
-    if (activeTab === 'leaderboard') {
+    if (activeTab === 'feed') {
       void fetchCaptions(20).then(setCaptions);
     }
   }, [activeTab]);
@@ -232,7 +234,7 @@ export function MiniApp() {
     { id: 'inventory',   label: '📚 Items',   badge: inventory.length,                       badgeAlert: false },
     { id: 'megaminds',   label: '💎 Mega',    badge: megaMindItems.length,                   badgeAlert: false },
     { id: 'tasks',       label: '✅ Tasks',   badge: `${tasksCompleted}/${tasksTotal}`,       badgeAlert: tasksPendingClaim > 0 },
-    { id: 'leaderboard', label: '🏆 Board',   badge: null,                                   badgeAlert: false },
+    { id: 'feed',        label: '📡 Feed',    badge: null,                                   badgeAlert: false },
     { id: 'agents',      label: '🧠 Agents',  badge: agentsState.agents.filter((a) => a.isRentedByMe).length || null, badgeAlert: false },
   ];
 
@@ -307,15 +309,15 @@ export function MiniApp() {
         {activeTab === 'tasks' && (
           <TasksTab dailyTasks={dailyTasks} tasksCompleted={tasksCompleted} tasksTotal={tasksTotal} gmChain={gmChain} evmChains={EVM_CHAINS} gmSent={gmSent} gmSending={gmSending} onSelectGmChain={setGmChain} onSendGm={sendGm} onClaimTask={handleClaimTask} renderEmojis={renderEmojis} />
         )}
-        {activeTab === 'leaderboard' && (
-          <LeaderboardTab
-            myRank={typeof myRank === 'number' ? myRank : 99}
-            leaderboardData={leaderboardData}
-            recentDiscoveries={recentDiscoveries}
+        {activeTab === 'feed' && (
+          <FeedTab
+            feedEvents={feedEvents}
+            feedLoading={feedLoading}
             captions={captions}
+            leaderboardData={leaderboardData}
+            myRank={typeof myRank === 'number' ? myRank : 99}
             renderEmojis={renderEmojis}
             tierBadge={TIER_BADGE}
-            points={PTS}
             onReactCaption={handleReactCaption}
             onReportCaption={handleReportCaption}
           />

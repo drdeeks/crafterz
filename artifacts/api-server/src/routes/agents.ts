@@ -7,6 +7,7 @@ import {
   expireStaleRentals,
 } from "../lib/agent-state.js";
 import { isEnabled } from "../lib/feature-flags.js";
+import { pushFeedEvent, buildPropagandaEvent } from "../lib/feed-state.js";
 
 const router = Router();
 
@@ -59,6 +60,12 @@ router.post("/agents/:agentId/rent", async (req, res) => {
 
     const agent = AGENT_DEFINITIONS[agentId];
     res.json({ ok: true, rental: result.rental, agent, buffApplied: agent.buffDescription });
+
+    // Fire-and-forget: push propaganda broadcast to the live feed
+    const propaganda = buildPropagandaEvent(agentId, agent.name, `fid:${parsed.data.fid}`);
+    if (propaganda) {
+      pushFeedEvent(propaganda).catch((err: unknown) => console.error("Propaganda push error:", err));
+    }
   } catch (err) {
     console.error("Agent rent error:", err);
     res.status(500).json({ ok: false, error: "Internal server error" });

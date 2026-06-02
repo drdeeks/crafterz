@@ -296,3 +296,33 @@ export async function fetchHeists(fid: number) {
   );
   return response?.ok ? response.heists : [];
 }
+
+// ─── Live Feed ────────────────────────────────────────────────────────────────
+
+export type FeedEventKind =
+  | "craft"
+  | "megamind"
+  | "heist_win"
+  | "heist_loss"
+  | "propaganda"
+  | "mint";
+
+export type ServerFeedEvent = {
+  id: string;
+  kind: FeedEventKind;
+  timestamp: string;
+  actorUsername: string;
+  actorPortrait: string;
+  headline: string;
+  detail?: string;
+  tier?: string;
+  emojis?: string[];
+  isMegaMind?: boolean;
+};
+
+export async function fetchFeed(limit = 30) {
+  const response = await requestJson<{ ok: boolean; events: ServerFeedEvent[] }>(
+    `/api/feed?limit=${limit}`,
+  );
+  return response?.ok ? response.events : [];
+}

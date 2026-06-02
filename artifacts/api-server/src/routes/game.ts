@@ -13,6 +13,7 @@ import {
 } from "../lib/game-state.js";
 import { readJson, writeJson } from "../lib/kv-store.js";
 import { generateCaption } from "../lib/caption-state.js";
+import { pushFeedEvent } from "../lib/feed-state.js";
 
 const router = Router();
 
@@ -116,14 +117,33 @@ router.post("/craft", async (req, res) => {
     const { player, awardedPoints } = await recordCraft(parsed.data);
     res.json({ ok: true, player, awardedPoints });
 
-    // Fire-and-forget comedy caption generation (MegaMinds always get one; 25% chance for others)
-    if (parsed.data.isMegaMind || Math.random() < 0.25) {
+    const isMega = Boolean(parsed.data.isMegaMind);
+    const username = parsed.data.username ?? "CrafterZ";
+    const tier = parsed.data.tier ?? "COMMON";
+
+    // Fire-and-forget: push discovery to live feed
+    pushFeedEvent({
+      kind: isMega ? "megamind" : "craft",
+      timestamp: new Date().toISOString(),
+      actorUsername: username,
+      actorPortrait: `https://api.dicebear.com/9.x/lorelei/svg?seed=${username}`,
+      headline: isMega
+        ? `✨ FIRST DISCOVERY! ${username} forged ${parsed.data.itemName}`
+        : `${username} crafted ${parsed.data.itemName}`,
+      detail: parsed.data.ingredients?.join(" + "),
+      tier,
+      emojis: parsed.data.emojis,
+      isMegaMind: isMega,
+    }).catch((err: unknown) => console.error("Feed push error:", err));
+
+    // Fire-and-forget: comedy caption (MegaMinds always get one; 25% chance for others)
+    if (isMega || Math.random() < 0.25) {
       generateCaption({
         itemName: parsed.data.itemName,
-        discovererUsername: parsed.data.username ?? "CrafterZ",
-        tier: parsed.data.tier,
+        discovererUsername: username,
+        tier,
         ingredients: parsed.data.ingredients ?? [],
-        isMegaMind: Boolean(parsed.data.isMegaMind),
+        isMegaMind: isMega,
       }).catch((err: unknown) => console.error("Caption generation error:", err));
     }
   } catch (err) {
