@@ -207,7 +207,7 @@ router.post("/gm", async (req, res) => {
 
 // ─── AI Craft ─────────────────────────────────────────────────────────────────
 
-const AI_CRAFT_CACHE_KEY = "craftz:ai-cache:v2";
+const AI_CRAFT_CACHE_KEY = "craftz:ai-cache:v3";
 const AI_DISCOVERED_KEY = "craftz:ai-discovered:v1";
 
 const craftRequestSchema = z.object({
@@ -219,13 +219,13 @@ const craftRequestSchema = z.object({
     name: z.string(),
     tier: z.string(),
     generation: z.number().int().min(0).max(50),
-    emojis: z.array(z.string()),
+    emoji: z.string().min(1).max(8),
   })).default([]),
 });
 
 const aiResponseSchema = z.object({
   name: z.string().min(1).max(60),
-  emojis: z.array(z.string().min(1).max(8)).length(2),
+  emoji: z.string().min(1).max(8),
   tier: z.enum(["COMMON", "RARE", "LEGENDARY"]),
   description: z.string().min(1).max(200),
 });
@@ -260,7 +260,7 @@ router.post("/ai-craft", async (req, res) => {
     }
 
     const discoveredList = discoveredItems.length > 0
-      ? discoveredItems.map(d => `- ${d.name} (Gen ${d.generation}, ${d.tier}, emojis: ${d.emojis.join("")})`).join("\n")
+      ? discoveredItems.map(d => `- ${d.name} (Gen ${d.generation}, ${d.tier}) ${d.emoji}`).join("\n")
       : "None yet — this is early in the game.";
 
     const genContext = genA === 0 && genB === 0
@@ -271,12 +271,12 @@ router.post("/ai-craft", async (req, res) => {
 
     const systemPrompt = `You are the Crafting Oracle for CrafterZ, a Farcaster mini-game. Players combine items to create new ones.
 RULES:
-1. Combine the two items logically. Return EXACTLY 2 emojis.
+1. Combine the two items logically. Return EXACTLY 1 emoji — the single most iconic, evocative emoji for the result.
 2. Tiers: COMMON (60%), RARE (30%), LEGENDARY (10%).
 3. Name should be 1-3 words, capitalized, evocative.
 4. DO NOT duplicate items from the discovered list.
-5. Higher generations → more abstract results.
-Respond with ONLY valid JSON: {"name": string, "emojis": [string, string], "tier": "COMMON"|"RARE"|"LEGENDARY", "description": string}`;
+5. Higher generations → more abstract/complex results.
+Respond with ONLY valid JSON: {"name": string, "emoji": string, "tier": "COMMON"|"RARE"|"LEGENDARY", "description": string}`;
 
     const userPrompt = `What is created when "${itemA}" (Gen ${genA}) and "${itemB}" (Gen ${genB}) are combined?\n${genContext}\nAlready discovered:\n${discoveredList}\nReturn ONLY the JSON object.`;
 
@@ -316,7 +316,7 @@ Respond with ONLY valid JSON: {"name": string, "emojis": [string, string], "tier
     const conflict = discoveredItems.find(d => d.name.toLowerCase().trim() === normalizedName);
 
     if (conflict) {
-      return res.json({ ok: true, cached: true, conflict: true, result: { name: conflict.name, emojis: conflict.emojis, tier: conflict.tier, isMegaMind: false, generation: resultGeneration } });
+      return res.json({ ok: true, cached: true, conflict: true, result: { name: conflict.name, emoji: conflict.emoji, tier: conflict.tier, isMegaMind: false, generation: resultGeneration } });
     }
 
     cache[cacheKey] = aiResult;

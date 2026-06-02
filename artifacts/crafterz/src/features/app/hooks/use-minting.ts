@@ -4,9 +4,10 @@ import type { AppMintPhase } from '../app-types';
 export interface MintModal {
   uid: string;
   name: string;
-  emojis: [string, string?];
+  emoji: string;
   tier: string;
   phase: AppMintPhase;
+  txHash?: string;
 }
 
 export interface UseMintingReturn {

@@ -1,17 +1,15 @@
-import type { AppInventoryItem, EmojiRenderer } from '../app-types';
+import type { AppInventoryItem } from '../app-types';
 
 export function InventoryTab({
   searchQuery,
   onSearchQueryChange,
   filteredInventory,
   onAddToCanvas,
-  renderEmojis,
 }: {
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
   filteredInventory: AppInventoryItem[];
   onAddToCanvas: (item: AppInventoryItem) => void;
-  renderEmojis: EmojiRenderer;
 }) {
   return (
     <div className="p-3">
@@ -44,7 +42,6 @@ export function InventoryTab({
                         : 'bg-zinc-900 border-zinc-800 hover:border-zinc-600'
               }`}
           >
-            {/* Star badge — top right of pill */}
             {item.isMegaMind && !item.isMinted && (
               <span className="absolute -top-1.5 -right-0.5 text-[11px] leading-none text-amber-400" style={{ textShadow: '0 0 6px #f59e0b88' }}>★</span>
             )}
@@ -52,7 +49,7 @@ export function InventoryTab({
               <span className="absolute -top-1.5 -right-0.5 text-[11px] leading-none text-emerald-400">✓</span>
             )}
 
-            <span className="text-lg leading-none">{renderEmojis(item.emojis)}</span>
+            <span className="text-lg leading-none">{item.emoji}</span>
             <span className={`text-sm font-semibold leading-none whitespace-nowrap
               ${item.isMegaMind && !item.isMinted ? 'text-amber-200' : item.isMinted ? 'text-emerald-200' : 'text-white'}`}>
               {item.name}

@@ -10,11 +10,12 @@ import type { AppInventoryItem, AppTab } from './app-types';
 import type { ServerCaption, ServerHeist } from './runtime-api';
 import { useFeed } from './hooks/use-feed';
 import { TIER_BADGE, EVM_CHAINS, CRAFTZ_COST, CRAFTZ_MAX, PTS } from './constants';
-import { renderEmojis, starColor } from './helpers';
+import { starColor, getAvatarUrl, generateTxHash } from './helpers';
 import { useCraftz } from './hooks/use-craftz';
 import { useServerSync } from './hooks/use-server-sync';
 import { useTasks } from './hooks/use-tasks';
 import { useMinting } from './hooks/use-minting';
+import { useProfile } from './hooks/use-profile';
 import { usePointToasts } from './hooks/use-point-toasts';
 import { useCrafting } from './hooks/use-crafting';
 import { useWeather } from './hooks/use-weather';
@@ -30,6 +31,9 @@ export function MiniApp() {
   const [adminFeedback, setAdminFeedback] = useState<string | null>(null);
   const [captions, setCaptions] = useState<ServerCaption[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const { profile, updateUsername, updatePfp, clearPfp, disconnectWallet } = useProfile();
+  const avatarSrc = profile.pfpDataUrl ?? profile.pfpUrl ?? getAvatarUrl(profile.username);
 
   const { craftz, craftzRef, setCraftz } = useCraftz();
   const { currentEvent: weatherEvent } = useWeather();
@@ -62,8 +66,8 @@ export function MiniApp() {
     cancelMintPriceInput, toggleMintingPause,
   } = useMinting(0.01);
 
-  const onMegaMindFound = useCallback((uid: string, name: string, emojis: [string, string?], tier: string) => {
-    setMintModal({ uid, name, emojis, tier, phase: 'prompt' });
+  const onMegaMindFound = useCallback((uid: string, name: string, emoji: string, tier: string) => {
+    setMintModal({ uid, name, emoji, tier, phase: 'prompt' });
   }, [setMintModal]);
 
   const {
@@ -72,6 +76,7 @@ export function MiniApp() {
     canvasRef, addToCanvas, clearCanvas, handlePointerDown,
   } = useCrafting({
     craftzRef, setCraftz, mintingPaused,
+    username: profile.username,
     onMegaMindFound,
     onAwardPoints: awardPoints,
     onAdvanceTask: advanceTask,
@@ -105,7 +110,7 @@ export function MiniApp() {
       setGmSending(false);
       awardPoints(PTS.GM_ONCHAIN, '🌅 GM! +10 pts', '#a855f7');
       advanceTask('gm_onchain');
-      void postGmEvent({ fid: 0, username: 'you', chain: gmChain }).then((player) => syncFromServerPlayer(player));
+      void postGmEvent({ fid: profile.fid ?? 0, username: profile.username, chain: gmChain }).then((player) => syncFromServerPlayer(player));
     }, 1800);
   }
 
@@ -114,21 +119,26 @@ export function MiniApp() {
     const modal = mintModalRef.current;
     if (!modal) return;
     if (modal.phase === 'prompt') {
-      setMintModal((m) => m ? { ...m, phase: 'connecting' } : null);
-      setTimeout(() => setMintModal((m) => m ? { ...m, phase: 'minting' } : null), 1200);
+      setMintModal((m) => m ? { ...m, phase: 'signing' } : null);
+      // Simulate wallet signing (~1.5s)
       setTimeout(() => {
-        const current = mintModalRef.current;
-        if (!current) return;
-        const tokenId = Math.floor(Math.random() * 9000) + 100;
-        setMintModal((m) => m ? { ...m, phase: 'done' } : null);
-        setInventory((inv) => inv.map((i) => i.uid === current.uid ? { ...i, isMinted: true, tokenId } : i));
-        awardPoints(PTS.MINT_MEGAMIND, '🎨 Minted! +25 pts', '#22c55e');
-        advanceTask('mint_megamind');
-        void postMintEvent({ fid: 0, username: 'you', itemName: current.name, tokenId }).then((player) => {
-          syncFromServerPlayer(player);
-          void refreshServerSnapshot();
-        });
-      }, 3000);
+        setMintModal((m) => m ? { ...m, phase: 'confirming' } : null);
+        // Simulate 3 on-chain confirmations (~3.5s)
+        setTimeout(() => {
+          const current = mintModalRef.current;
+          if (!current) return;
+          const tokenId = Math.floor(Math.random() * 9000) + 100;
+          const txHash = generateTxHash();
+          setMintModal((m) => m ? { ...m, phase: 'done', txHash } : null);
+          setInventory((inv) => inv.map((i) => i.uid === current.uid ? { ...i, isMinted: true, tokenId, txHash } : i));
+          awardPoints(PTS.MINT_MEGAMIND, '🎨 Minted! +25 pts', '#22c55e');
+          advanceTask('mint_megamind');
+          void postMintEvent({ fid: profile.fid ?? 0, username: profile.username, itemName: current.name, tokenId, txHash }).then((player) => {
+            syncFromServerPlayer(player);
+            void refreshServerSnapshot();
+          });
+        }, 3500);
+      }, 1500);
     } else if (modal.phase === 'done') {
       setMintModal(null);
     }
@@ -136,7 +146,7 @@ export function MiniApp() {
 
   function startMint(item: AppInventoryItem) {
     if (mintingPaused) { adminAction('Minting is currently paused'); return; }
-    setMintModal({ uid: item.uid, name: item.name, emojis: item.emojis, tier: item.tier, phase: 'prompt' });
+    setMintModal({ uid: item.uid, name: item.name, emoji: item.emoji, tier: item.tier, phase: 'prompt' });
   }
 
   // ─── Task claiming ─────────────────────────────────────────────────────────
@@ -177,7 +187,7 @@ export function MiniApp() {
       defenderFid: null,
       defenderUsername: 'Bot Opponent',
       targetItemName: target.name,
-      targetItemEmojis: target.emojis.filter(Boolean) as string[],
+      targetItemEmojis: [target.emoji],
       targetItemTier: target.tier,
       entryCraftz: HEIST_COST,
       challengerItemName: weapon.name,
@@ -249,7 +259,6 @@ export function MiniApp() {
           mintModal={mintModal}
           onClose={() => setMintModal(null)}
           onAdvance={advanceMint}
-          renderEmojis={renderEmojis}
           tierBadge={TIER_BADGE}
         />
       )}
@@ -263,7 +272,11 @@ export function MiniApp() {
       {settingsOpen && (
         <SettingsModal
           onClose={() => setSettingsOpen(false)}
-          username="you"
+          profile={profile}
+          onUpdateUsername={updateUsername}
+          onUpdatePfp={updatePfp}
+          onClearPfp={clearPfp}
+          onDisconnectWallet={disconnectWallet}
           craftz={craftz}
           craftzMax={CRAFTZ_MAX}
           aiEnabled={aiEnabled}
@@ -280,7 +293,7 @@ export function MiniApp() {
         isAdmin={false}
         myRank={typeof myRank === 'number' ? myRank : 99}
         myPoints={myPoints}
-        username="you"
+        avatarSrc={avatarSrc}
         weatherEvent={weatherEvent}
         onAvatarClick={() => setSettingsOpen(true)}
       />
@@ -293,7 +306,6 @@ export function MiniApp() {
         onPointerDown={handlePointerDown}
         combining={combining}
         pulseTarget={pulseTarget}
-        renderEmojis={renderEmojis}
         starColor={starColor}
       />
 
@@ -309,13 +321,12 @@ export function MiniApp() {
 
       <div className="flex-1 overflow-y-auto min-h-0 bg-zinc-950">
         {activeTab === 'inventory' && (
-          <InventoryTab searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} filteredInventory={filteredInventory} onAddToCanvas={addToCanvas} renderEmojis={renderEmojis} />
+          <InventoryTab searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} filteredInventory={filteredInventory} onAddToCanvas={addToCanvas} />
         )}
         {activeTab === 'megaminds' && (
           <MegaMindsTab
             megaMindItems={megaMindItems}
             inventory={inventory}
-            renderEmojis={renderEmojis}
             tierBadge={TIER_BADGE}
             craftz={craftz}
             onStartMint={startMint}
@@ -323,7 +334,7 @@ export function MiniApp() {
           />
         )}
         {activeTab === 'tasks' && (
-          <TasksTab dailyTasks={dailyTasks} tasksCompleted={tasksCompleted} tasksTotal={tasksTotal} gmChain={gmChain} evmChains={EVM_CHAINS} gmSent={gmSent} gmSending={gmSending} onSelectGmChain={setGmChain} onSendGm={sendGm} onClaimTask={handleClaimTask} renderEmojis={renderEmojis} />
+          <TasksTab dailyTasks={dailyTasks} tasksCompleted={tasksCompleted} tasksTotal={tasksTotal} gmChain={gmChain} evmChains={EVM_CHAINS} gmSent={gmSent} gmSending={gmSending} onSelectGmChain={setGmChain} onSendGm={sendGm} onClaimTask={handleClaimTask} />
         )}
         {activeTab === 'feed' && (
           <FeedTab
@@ -332,7 +343,6 @@ export function MiniApp() {
             captions={captions}
             leaderboardData={leaderboardData}
             myRank={typeof myRank === 'number' ? myRank : 99}
-            renderEmojis={renderEmojis}
             tierBadge={TIER_BADGE}
             onReactCaption={handleReactCaption}
             onReportCaption={handleReportCaption}
@@ -406,21 +416,30 @@ function TabBar({
 }
 
 function MintModal({
-  mintModal, onClose, onAdvance, renderEmojis, tierBadge,
+  mintModal, onClose, onAdvance, tierBadge,
 }: {
-  mintModal: { uid: string; name: string; emojis: [string, string?]; tier: string; phase: string };
+  mintModal: { uid: string; name: string; emoji: string; tier: string; phase: string; txHash?: string };
   onClose: () => void;
   onAdvance: () => void;
-  renderEmojis: (emojis: [string, string?]) => string;
   tierBadge: Record<string, string>;
 }) {
+  const [confirmCount, setConfirmCount] = useState(0);
+
+  useEffect(() => {
+    if (mintModal.phase !== 'confirming') { setConfirmCount(0); return; }
+    const timers = [900, 1900, 3100].map((delay, i) =>
+      setTimeout(() => setConfirmCount(i + 1), delay)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [mintModal.phase]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 backdrop-blur-sm px-4 pb-6">
       <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-sm text-center shadow-2xl">
         {mintModal.phase === 'prompt' && (
           <>
             <p className="text-amber-400 font-bold text-xs tracking-[0.15em] uppercase mb-3">🎉 MegaMind Discovery!</p>
-            <div className="text-6xl my-4">{renderEmojis(mintModal.emojis)}</div>
+            <div className="text-6xl my-4">{mintModal.emoji}</div>
             <p className="text-white font-bold text-xl">{mintModal.name}</p>
             <div className="flex items-center justify-center gap-2 mt-2 mb-1">
               <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${tierBadge[mintModal.tier]}`}>{mintModal.tier}</span>
@@ -436,26 +455,41 @@ function MintModal({
               <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold hover:bg-zinc-800 transition-colors">Skip</button>
               <button onClick={onAdvance} className="flex-1 py-2.5 rounded-xl bg-amber-400 text-zinc-900 text-sm font-bold hover:bg-amber-300 transition-colors">🎨 Mint NFT</button>
             </div>
-            <p className="text-zinc-700 text-[10px] mt-3">Minting = user wallet confirmation required</p>
+            <p className="text-zinc-700 text-[10px] mt-3">Requires wallet confirmation to proceed</p>
           </>
         )}
-        {mintModal.phase === 'connecting' && (
-          <div className="py-6">
+
+        {mintModal.phase === 'signing' && (
+          <div className="py-8">
             <div className="text-5xl mb-4 animate-pulse">👛</div>
-            <p className="text-white font-semibold">Connecting wallet…</p>
-            <p className="text-zinc-500 text-xs mt-2">Approve in your wallet</p>
-          </div>
-        )}
-        {mintModal.phase === 'minting' && (
-          <div className="py-6">
-            <div className="text-5xl mb-4">{renderEmojis(mintModal.emojis)}</div>
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-              <p className="text-white font-semibold">Minting…</p>
+            <p className="text-white font-semibold text-base">Sign in wallet</p>
+            <p className="text-zinc-500 text-xs mt-2">Preparing your transaction…</p>
+            <div className="mt-4 flex items-center justify-center gap-2">
+              <div className="w-4 h-4 border-2 border-zinc-600 border-t-amber-400 rounded-full animate-spin" />
+              <span className="text-zinc-500 text-xs">Waiting for signature</span>
             </div>
-            <p className="text-zinc-500 text-xs mt-2">Confirm the transaction in your wallet</p>
           </div>
         )}
+
+        {mintModal.phase === 'confirming' && (
+          <div className="py-8">
+            <div className="text-5xl mb-4">{mintModal.emoji}</div>
+            <p className="text-white font-semibold text-base">Confirming on-chain</p>
+            <p className="text-zinc-500 text-xs mt-1 mb-4">Transaction submitted to Base</p>
+            <div className="flex items-center justify-center gap-3 mb-3">
+              {[1, 2, 3].map((n) => (
+                <div key={n} className={`flex flex-col items-center gap-1 transition-all duration-500 ${confirmCount >= n ? 'opacity-100' : 'opacity-30'}`}>
+                  <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-bold ${confirmCount >= n ? 'border-emerald-500 bg-emerald-500/15 text-emerald-400' : 'border-zinc-700 text-zinc-600'}`}>
+                    {confirmCount >= n ? '✓' : n}
+                  </div>
+                  <span className="text-[9px] text-zinc-600">Block {n}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-zinc-600 text-[10px]">{confirmCount}/3 confirmations</p>
+          </div>
+        )}
+
         {mintModal.phase === 'done' && (
           <>
             <div className="text-5xl mb-3">🎉</div>
@@ -465,8 +499,22 @@ function MintModal({
               <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${tierBadge[mintModal.tier]}`}>{mintModal.tier}</span>
               <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">✓ NFT</span>
             </div>
-            <p className="text-zinc-500 text-xs mb-5">Your discovery is permanently on-chain. +25 pts awarded.</p>
-            <button onClick={onClose} className="w-full py-2.5 rounded-xl bg-zinc-800 text-white text-sm font-semibold">Done</button>
+            <p className="text-zinc-500 text-xs mb-3">Your discovery is permanently on-chain. +25 pts awarded.</p>
+            {mintModal.txHash && (
+              <div className="bg-zinc-800/60 rounded-xl p-3 mb-4">
+                <p className="text-zinc-600 text-[10px] mb-1.5">Transaction Hash</p>
+                <a
+                  href={`https://basescan.org/tx/${mintModal.txHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 text-[10px] font-mono hover:text-blue-300 break-all underline underline-offset-2"
+                >
+                  {mintModal.txHash.slice(0, 14)}…{mintModal.txHash.slice(-8)} ↗
+                </a>
+                <p className="text-zinc-700 text-[9px] mt-1.5">View on Basescan</p>
+              </div>
+            )}
+            <button onClick={onAdvance} className="w-full py-2.5 rounded-xl bg-zinc-800 text-white text-sm font-semibold hover:bg-zinc-700 transition-colors">Done</button>
           </>
         )}
       </div>

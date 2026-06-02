@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { AppInventoryItem, EmojiRenderer } from '../app-types';
+import type { AppInventoryItem } from '../app-types';
 import type { ServerHeist } from '../runtime-api';
 
 interface HeistResult {
@@ -10,7 +10,6 @@ interface HeistResult {
 export function MegaMindsTab({
   megaMindItems,
   inventory,
-  renderEmojis,
   tierBadge,
   craftz,
   onStartMint,
@@ -18,7 +17,6 @@ export function MegaMindsTab({
 }: {
   megaMindItems: AppInventoryItem[];
   inventory: AppInventoryItem[];
-  renderEmojis: EmojiRenderer;
   tierBadge: Record<string, string>;
   craftz: number;
   onStartMint: (item: AppInventoryItem) => void;
@@ -72,7 +70,7 @@ export function MegaMindsTab({
             className={`rounded-xl border p-4 flex items-center gap-4 ${item.isMinted ? 'bg-emerald-950/10 border-emerald-600/25' : 'bg-amber-950/15 border-amber-500/25'}`}
           >
             <div className="relative flex-shrink-0">
-              <span className="text-4xl">{renderEmojis(item.emojis)}</span>
+              <span className="text-4xl">{item.emoji}</span>
               {item.isMinted && (
                 <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">✓</span>
               )}
@@ -84,14 +82,26 @@ export function MegaMindsTab({
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-amber-500/15 text-amber-300 border border-amber-500/25">⚡ MEGAMIND</span>
               </div>
               {item.isMinted && item.tokenId && (
-                <p className="text-zinc-600 text-xs mt-1">Token #{item.tokenId}</p>
+                <div className="mt-1">
+                  <p className="text-zinc-600 text-xs">Token #{item.tokenId}</p>
+                  {item.txHash && (
+                    <a
+                      href={`https://basescan.org/tx/${item.txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 text-[10px] hover:text-blue-300 underline underline-offset-2"
+                    >
+                      {item.txHash.slice(0, 10)}…{item.txHash.slice(-6)} ↗
+                    </a>
+                  )}
+                </div>
               )}
             </div>
             <div className="text-right flex-shrink-0 flex flex-col items-end gap-1.5">
               {item.isMinted ? (
                 <div>
                   <p className="text-amber-400 font-bold text-sm">25 pts</p>
-                  <button className="text-emerald-400 text-xs mt-1 hover:text-emerald-300">View →</button>
+                  <span className="text-emerald-400 text-xs mt-1">✓ On-chain</span>
                 </div>
               ) : (
                 <>
@@ -131,7 +141,7 @@ export function MegaMindsTab({
                       onClick={() => setSelectedWeapon(selectedWeapon?.uid === w.uid ? null : w)}
                       className={`rounded-lg border p-2 flex items-center gap-2 text-left transition-colors ${selectedWeapon?.uid === w.uid ? 'bg-amber-900/30 border-amber-500/50' : 'bg-zinc-800/60 border-zinc-700 hover:bg-zinc-700/60'}`}
                     >
-                      <span className="text-base leading-none">{renderEmojis(w.emojis)}</span>
+                      <span className="text-base leading-none">{w.emoji}</span>
                       <div className="min-w-0">
                         <p className="text-white text-[11px] font-semibold truncate">{w.name}</p>
                         <span className={`text-[9px] px-1 py-0.5 rounded font-bold ${tierBadge[w.tier]}`}>{w.tier}</span>

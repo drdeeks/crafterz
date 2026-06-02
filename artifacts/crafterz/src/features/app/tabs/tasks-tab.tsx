@@ -1,5 +1,5 @@
 import { TaskProgressBar } from '../ui-primitives';
-import type { AppDailyTask, EmojiRenderer, EvmChainOption } from '../app-types';
+import type { AppDailyTask, EvmChainOption } from '../app-types';
 
 export function TasksTab({
   dailyTasks,
@@ -12,7 +12,6 @@ export function TasksTab({
   onSelectGmChain,
   onSendGm,
   onClaimTask,
-  renderEmojis,
 }: {
   dailyTasks: AppDailyTask[];
   tasksCompleted: number;
@@ -24,7 +23,6 @@ export function TasksTab({
   onSelectGmChain: (chainId: string) => void;
   onSendGm: () => void;
   onClaimTask: (taskId: string) => void;
-  renderEmojis: EmojiRenderer;
 }) {
   return (
     <div className="p-3 space-y-3">
@@ -44,7 +42,7 @@ export function TasksTab({
       ))}
 
       {dailyTasks.filter((t) => t.type === 'craft_target').map((task) => (
-        <MysteryTask key={task.id} task={task} renderEmojis={renderEmojis} onClaimTask={onClaimTask} />
+        <MysteryTask key={task.id} task={task} onClaimTask={onClaimTask} />
       ))}
 
       {dailyTasks
@@ -143,9 +141,8 @@ function GmTask({ task, gmChain, evmChains, gmSent, gmSending, onSelectGmChain, 
   );
 }
 
-function MysteryTask({ task, renderEmojis, onClaimTask }: {
+function MysteryTask({ task, onClaimTask }: {
   task: AppDailyTask;
-  renderEmojis: EmojiRenderer;
   onClaimTask: (taskId: string) => void;
 }) {
   const revealed = task.progress >= task.required || task.completed;
@@ -162,7 +159,7 @@ function MysteryTask({ task, renderEmojis, onClaimTask }: {
           <p className="text-zinc-500 text-xs mt-0.5">{task.description}</p>
           <div className={`mt-3 rounded-xl border p-3 flex items-center gap-3 ${revealed ? 'bg-amber-950/20 border-amber-500/30' : 'bg-zinc-800/60 border-zinc-700'}`}>
             <div className="text-3xl w-10 text-center">
-              {revealed ? renderEmojis(task.targetEmojis ?? ['❓']) : '❓'}
+              {revealed ? (task.targetEmoji ?? '❓') : '❓'}
             </div>
             <div>
               <p className={`text-sm font-bold ${revealed ? 'text-amber-300' : 'text-zinc-400'}`}>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { DiscoveryFeedItem } from '../discovery-feed';
-import type { EmojiRenderer, PointsConfig } from '../app-types';
+import type { PointsConfig } from '../app-types';
 import type { LeaderboardRow } from '../hooks/use-server-sync';
 import type { ServerCaption } from '../runtime-api';
 
@@ -19,7 +19,6 @@ export function LeaderboardTab({
   leaderboardData,
   recentDiscoveries,
   captions,
-  renderEmojis,
   tierBadge,
   points,
   onReactCaption,
@@ -29,7 +28,6 @@ export function LeaderboardTab({
   leaderboardData: LeaderboardRow[];
   recentDiscoveries: DiscoveryFeedItem[];
   captions: ServerCaption[];
-  renderEmojis: EmojiRenderer;
   tierBadge: Record<string, string>;
   points: PointsConfig;
   onReactCaption: (id: string) => void;
@@ -92,7 +90,7 @@ export function LeaderboardTab({
                   <span className="text-white font-semibold">{d.discoverer}</span> discovered
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-base leading-none">{renderEmojis(d.emojis)}</span>
+                  <span className="text-base leading-none">{d.emoji}</span>
                   <p className="text-white text-xs font-bold truncate">{d.name}</p>
                   <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0 ${tierBadge[d.tier]}`}>{d.tier}</span>
                   {d.minted && <span className="text-emerald-400 text-[9px] font-bold flex-shrink-0">✓ NFT</span>}

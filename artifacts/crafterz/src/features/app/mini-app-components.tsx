@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { EvmChainOption, AppCanvasItem, AppInventoryItem, EmojiRenderer } from './app-types';
+import { AppCanvasItem, AppInventoryItem } from './app-types';
 import type { WeatherEvent } from './hooks/use-weather';
 
 // ─── Header Component ────────────────────────────────────────────────────────
@@ -10,7 +10,7 @@ export const AppHeader = memo(function AppHeader({
   isAdmin,
   myRank,
   myPoints,
-  username,
+  avatarSrc,
   weatherEvent,
   onAvatarClick,
 }: {
@@ -19,7 +19,7 @@ export const AppHeader = memo(function AppHeader({
   isAdmin: boolean;
   myRank: number;
   myPoints: number;
-  username: string;
+  avatarSrc: string;
   weatherEvent?: WeatherEvent | null;
   onAvatarClick?: () => void;
 }) {
@@ -62,11 +62,7 @@ export const AppHeader = memo(function AppHeader({
           className="rounded-full border-2 border-zinc-700 hover:border-zinc-500 transition-colors flex-shrink-0 focus:outline-none"
           aria-label="Open settings"
         >
-          <img
-            src={`https://api.dicebear.com/9.x/lorelei/svg?seed=${username}`}
-            className="w-8 h-8 rounded-full block"
-            alt=""
-          />
+          <img src={avatarSrc} className="w-8 h-8 rounded-full block" alt="" />
         </button>
       </div>
     </div>
@@ -83,7 +79,6 @@ export const CraftingCanvas = memo(function CraftingCanvas({
   onPointerDown,
   combining,
   pulseTarget,
-  renderEmojis,
   starColor,
 }: {
   canvasRef: React.RefObject<HTMLDivElement | null>;
@@ -93,7 +88,6 @@ export const CraftingCanvas = memo(function CraftingCanvas({
   onPointerDown: (e: React.PointerEvent, instanceId: string) => void;
   combining: { a: string; b: string } | null;
   pulseTarget: string | null;
-  renderEmojis: EmojiRenderer;
   starColor: (tier: string, isMegaMind?: boolean) => string | null;
 }) {
   return (
@@ -130,7 +124,7 @@ export const CraftingCanvas = memo(function CraftingCanvas({
           >
             <div className={`relative flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 border backdrop-blur-sm ${isCombining ? 'bg-amber-900/50 border-amber-400 animate-pulse' : isPulse ? 'bg-yellow-900/50 border-yellow-400 shadow-lg shadow-yellow-500/20' : 'bg-zinc-900/95 border-zinc-700 shadow-md shadow-black/60'}`} style={{ minWidth: 52 }}>
               {sc && <span className="absolute -top-1.5 -right-1.5 text-[11px] leading-none" style={{ color: sc, textShadow: `0 0 5px ${sc}88` }}>★</span>}
-              <span className="text-xl leading-none tracking-tight">{renderEmojis(item.emojis)}</span>
+              <span className="text-xl leading-none">{item.emoji}</span>
               <span className="text-white text-xs font-semibold text-center leading-tight">{item.name}</span>
             </div>
           </div>

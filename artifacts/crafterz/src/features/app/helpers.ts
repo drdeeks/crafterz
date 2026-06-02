@@ -13,11 +13,6 @@ export function strHash(s: string): number {
 let instanceCounter = 0;
 export const newId = () => `inst-${++instanceCounter}-${Math.random().toString(36).slice(2, 7)}`;
 
-export function renderEmojis(emojis: [string, string?] | string[] | undefined | null): string {
-  if (!emojis || !Array.isArray(emojis)) return '';
-  return emojis.filter(Boolean).join('');
-}
-
 export function tierPoints(tier: string): number {
   if (tier === 'LEGENDARY') return PTS.CRAFT_LEGENDARY;
   if (tier === 'RARE') return PTS.CRAFT_RARE;
@@ -54,7 +49,7 @@ export function generateDailyTasks(userFid: number): AppDailyTask[] {
       description: 'Figure out how to craft this specific item using the hint below.',
       icon: '🔮', points: 20, xpReward: 100, craftzReward: 20,
       progress: 0, required: 1, completed: false,
-      targetItem: target.name, targetHint: target.hint, targetEmojis: target.emojis,
+      targetItem: target.name, targetHint: target.hint, targetEmoji: target.emoji,
     },
     {
       id: 'task-crafts', type: 'craft_count', title: `Craft ${craftGoal} Items`,
@@ -87,4 +82,25 @@ export function generateDailyTasks(userFid: number): AppDailyTask[] {
       progress: 0, required: 1, completed: false,
     },
   ];
+}
+
+export function getAvatarUrl(username: string): string {
+  return `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(username)}`;
+}
+
+export function generateTxHash(): string {
+  const hex = '0123456789abcdef';
+  return '0x' + Array.from({ length: 64 }, () => hex[Math.floor(Math.random() * 16)]).join('');
+}
+
+export function getTxExplorerUrl(txHash: string, chainId = 'base'): string {
+  const explorers: Record<string, string> = {
+    base:     'https://basescan.org/tx/',
+    ethereum: 'https://etherscan.io/tx/',
+    optimism: 'https://optimistic.etherscan.io/tx/',
+    arbitrum: 'https://arbiscan.io/tx/',
+    polygon:  'https://polygonscan.com/tx/',
+    zora:     'https://explorer.zora.energy/tx/',
+  };
+  return (explorers[chainId] ?? explorers['base']) + txHash;
 }

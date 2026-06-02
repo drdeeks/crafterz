@@ -11,7 +11,8 @@ export interface UseCraftingOptions {
   craftzRef: React.MutableRefObject<number>;
   setCraftz: React.Dispatch<React.SetStateAction<number>>;
   mintingPaused: boolean;
-  onMegaMindFound: (uid: string, name: string, emojis: [string, string?], tier: string) => void;
+  username: string;
+  onMegaMindFound: (uid: string, name: string, emoji: string, tier: string) => void;
   onAwardPoints: (pts: number, label: string, color?: string) => void;
   onAdvanceTask: (type: AppDailyTaskType, by?: number, matchName?: string) => void;
   onSetMyCrafts: React.Dispatch<React.SetStateAction<number>>;
@@ -36,7 +37,7 @@ export interface UseCraftingReturn {
 
 export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
   const {
-    craftzRef, setCraftz, mintingPaused,
+    craftzRef, setCraftz, mintingPaused, username,
     onMegaMindFound, onAwardPoints, onAdvanceTask,
     onSetMyCrafts, onSetMyMegaMinds,
     onSyncFromServerPlayer, onRefreshServerSnapshot,
@@ -50,7 +51,6 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ instanceId: string; startX: number; startY: number; itemX: number; itemY: number } | null>(null);
-  // Prevents simultaneous craft attempts
   const craftingRef = useRef(false);
   const globalRegistryRef = useRef<Set<string>>(new Set());
   const inventoryNamesRef = useRef<Set<string>>(
@@ -59,7 +59,7 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
   const inventoryRef = useRef<AppInventoryItem[]>(inventory);
   inventoryRef.current = inventory;
 
-  // Probe with valid params — genA/genB required by schema
+  // Probe: only returns false if AI_API_KEY is explicitly missing
   useEffect(() => {
     fetch('/api/ai-craft', {
       method: 'POST',
@@ -68,7 +68,6 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
     })
       .then((r) => r.json())
       .then((d: { ok?: boolean; error?: string }) => {
-        // Only false if server explicitly says the key is missing
         setAiEnabled(!d.error?.includes('AI_API_KEY'));
       })
       .catch(() => setAiEnabled(false));
@@ -81,7 +80,7 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
     const x = 44 + Math.random() * (rect.width - 110);
     const y = 30 + Math.random() * (rect.height - 76);
     setCanvasItems((prev) => [...prev, {
-      instanceId: newId(), id: item.id, name: item.name, emojis: item.emojis,
+      instanceId: newId(), id: item.id, name: item.name, emoji: item.emoji,
       tier: item.tier, generation: item.generation, isMegaMind: item.isMegaMind, x, y,
     }]);
   }, []);
@@ -124,7 +123,6 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
         const target = prev.find((i) => i.instanceId !== instanceId && Math.hypot(i.x - finalX, i.y - finalY) < 58);
 
         if (target) {
-          // Guard: not enough Craftz OR another craft is already in progress
           if (craftzRef.current < CRAFTZ_COST || craftingRef.current) {
             return prev.map((i) => i.instanceId === instanceId ? { ...i, x: finalX, y: finalY, isDragging: false } : i);
           }
@@ -133,7 +131,7 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
           const midX = (finalX + target.x) / 2;
           const midY = (finalY + target.y) / 2;
           setCombining({ a: instanceId, b: target.instanceId });
-          // ── DO NOT deduct Craftz yet — only charge on a successful craft ──
+          // Craftz charged only after confirmed result
 
           void (async () => {
             let crafted = null;
@@ -141,11 +139,11 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
             if (aiEnabled) {
               const discoveredItems: DiscoveredItem[] = inventoryRef.current
                 .filter((i) => i.tier !== 'GENESIS')
-                .map((i) => ({ name: i.name, tier: i.tier, generation: i.generation, emojis: i.emojis.filter(Boolean) as string[] }));
+                .map((i) => ({ name: i.name, tier: i.tier, generation: i.generation, emoji: i.emoji }));
               const aiResult = await aiCraft(dragging.name, target.name, dragging.generation, target.generation, discoveredItems);
               if (aiResult.ok && aiResult.result) {
                 crafted = {
-                  name: aiResult.result.name, emojis: aiResult.result.emojis,
+                  name: aiResult.result.name, emoji: aiResult.result.emoji,
                   tier: aiResult.result.tier, isMegaMind: aiResult.result.isMegaMind,
                   recipe: `${dragging.name} + ${target.name}`, generation: aiResult.result.generation,
                 };
@@ -157,14 +155,13 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
             }
 
             if (!crafted) {
-              // No recipe found — reset with no cost, no flicker
               craftingRef.current = false;
               setCombining(null);
               setCanvasItems((curr) => curr.map((i) => i.instanceId === instanceId ? { ...i, x: finalX, y: finalY, isDragging: false } : i));
               return;
             }
 
-            // ── Recipe found: now deduct Craftz ──
+            // Recipe found — deduct Craftz now
             setCraftz((c) => { const next = Math.max(0, c - CRAFTZ_COST); craftzRef.current = next; return next; });
 
             const normalizedName = crafted.name.toLowerCase().trim();
@@ -187,10 +184,11 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
             if (crafted.isMegaMind) onAdvanceTask('discover_new');
 
             void postCraftEvent({
-              fid: 0, username: 'you', itemName: crafted.name,
+              fid: 0, username,
+              itemName: crafted.name,
               tier: crafted.tier as 'COMMON' | 'RARE' | 'LEGENDARY',
               ingredients: [dragging.name, target.name],
-              emojis: crafted.emojis.filter((e): e is string => Boolean(e)),
+              emojis: [crafted.emoji],
               isMegaMind: crafted.isMegaMind,
               pointsAwarded: pts,
             }).then((player) => {
@@ -199,8 +197,8 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
             });
 
             const resolvedItem: AppInventoryItem = alreadyInInventory
-              ? { uid: `u-existing-${normalizedName}`, id: normalizedName, name: crafted.name, emojis: crafted.emojis, tier: crafted.tier, generation: crafted.generation, isMegaMind: false, isMinted: false }
-              : { uid: `u-crafted-${newId()}`, id: normalizedName, name: crafted.name, emojis: crafted.emojis, tier: crafted.tier, recipe: crafted.recipe, generation: crafted.generation, isMegaMind: crafted.isMegaMind, isMinted: false };
+              ? { uid: `u-existing-${normalizedName}`, id: normalizedName, name: crafted.name, emoji: crafted.emoji, tier: crafted.tier, generation: crafted.generation, isMegaMind: false, isMinted: false }
+              : { uid: `u-crafted-${newId()}`, id: normalizedName, name: crafted.name, emoji: crafted.emoji, tier: crafted.tier, recipe: crafted.recipe, generation: crafted.generation, isMegaMind: crafted.isMegaMind, isMinted: false };
 
             craftingRef.current = false;
             setCombining(null);
@@ -208,7 +206,7 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
               const filtered = curr.filter((i) => i.instanceId !== instanceId && i.instanceId !== target.instanceId);
               return [...filtered, {
                 instanceId: newId(), id: resolvedItem.id, name: resolvedItem.name,
-                emojis: resolvedItem.emojis, tier: resolvedItem.tier,
+                emoji: resolvedItem.emoji, tier: resolvedItem.tier,
                 generation: resolvedItem.generation, isMegaMind: resolvedItem.isMegaMind,
                 x: midX, y: midY,
               }];
@@ -221,7 +219,7 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
                 return [...inv, resolvedItem];
               });
               if (crafted.isMegaMind && !mintingPaused) {
-                setTimeout(() => onMegaMindFound(resolvedItem.uid, resolvedItem.name, resolvedItem.emojis, resolvedItem.tier), 400);
+                setTimeout(() => onMegaMindFound(resolvedItem.uid, resolvedItem.name, resolvedItem.emoji, resolvedItem.tier), 400);
               }
             }
           })();
@@ -238,7 +236,7 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
 
     document.addEventListener('pointermove', onMove);
     document.addEventListener('pointerup', onUp);
-  }, [canvasItems, aiEnabled, mintingPaused, craftzRef, setCraftz, onAwardPoints, onAdvanceTask, onSetMyCrafts, onSetMyMegaMinds, onSyncFromServerPlayer, onRefreshServerSnapshot, onMegaMindFound]);
+  }, [canvasItems, aiEnabled, mintingPaused, username, craftzRef, setCraftz, onAwardPoints, onAdvanceTask, onSetMyCrafts, onSetMyMegaMinds, onSyncFromServerPlayer, onRefreshServerSnapshot, onMegaMindFound]);
 
   return {
     inventory, setInventory,

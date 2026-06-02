@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { ServerFeedEvent } from '../runtime-api';
 import type { ServerCaption } from '../runtime-api';
 import type { LeaderboardRow } from '../hooks/use-server-sync';
-import type { EmojiRenderer } from '../app-types';
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -163,7 +162,6 @@ export function FeedTab({
   captions,
   leaderboardData,
   myRank,
-  renderEmojis,
   tierBadge,
   onReactCaption,
   onReportCaption,
@@ -173,7 +171,6 @@ export function FeedTab({
   captions: ServerCaption[];
   leaderboardData: LeaderboardRow[];
   myRank: number | string;
-  renderEmojis: EmojiRenderer;
   tierBadge: Record<string, string>;
   onReactCaption: (id: string) => void;
   onReportCaption: (id: string) => void;

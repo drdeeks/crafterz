@@ -6,12 +6,13 @@ export interface AppInventoryItem {
   uid: string;
   id: string;
   name: string;
-  emojis: [string, string?];
+  emoji: string;
   tier: AppInventoryTier;
   generation: number;
   isMegaMind?: boolean;
   isMinted?: boolean;
   tokenId?: number;
+  txHash?: string;
   recipe?: string;
 }
 
@@ -19,7 +20,7 @@ export interface AppCanvasItem {
   instanceId: string;
   id: string;
   name: string;
-  emojis: [string, string?];
+  emoji: string;
   tier: string;
   generation: number;
   isMegaMind?: boolean;
@@ -34,7 +35,7 @@ export type AppDailyTask = Omit<ServerTask, 'updatedAt'> & {
 export type AppDailyTaskType = ServerTask['type'];
 
 export type AppTab = 'inventory' | 'megaminds' | 'tasks' | 'leaderboard' | 'feed' | 'agents' | 'admin';
-export type AppMintPhase = 'prompt' | 'connecting' | 'minting' | 'done';
+export type AppMintPhase = 'prompt' | 'signing' | 'confirming' | 'done';
 
 export type EvmChainOption = {
   id: string;
@@ -71,7 +72,3 @@ export type AdminStats = {
   craftzCirculating: number;
   contractBalance: string;
 };
-
-export type EmojiRenderer = (
-  emojis: [string, string?] | string[] | undefined | null,
-) => string;

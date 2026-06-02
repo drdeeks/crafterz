@@ -1,3 +1,3 @@
-- [x402 payment model](x402-payment-model.md) — agent micro-transactions are x402-autonomous; only user-initiated on-chain actions need wallet confirmation.
-- [Weather scheduler pattern](weather-scheduler.md) — deterministic time-based events via `Math.floor(Date.now() / WINDOW_MS)`; no background process needed.
-- [Craftz refund policy](craftz-refund-policy.md) — CRAFTZ_COST must be refunded whenever `crafted === null`; strict no-hole policy enforced by user request.
+- [Emoji refactor](emoji-refactor.md) — AppInventoryItem uses `emoji: string` (not `emojis`); EmojiRenderer type removed; server feed events still use `emojis: string[]` array (OK)
+- [Mint flow phases](mint-flow-phases.md) — MintState phases: prompt→signing→confirming→done; txHash generated client-side via generateTxHash(); stored on AppInventoryItem
+- [Profile stack](profile-stack.md) — useProfile reads Farcaster SDK context → Neynar enrichment via /api/neynar/user?fid=X proxy; falls back to localStorage username + dicebear avatar

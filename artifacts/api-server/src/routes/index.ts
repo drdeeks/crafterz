@@ -6,6 +6,7 @@ import agentsRouter from "./agents.js";
 import weatherRouter from "./weather.js";
 import captionsRouter from "./captions.js";
 import feedRouter from "./feed.js";
+import neynarRouter from "./neynar.js";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(agentsRouter);
 router.use(weatherRouter);
 router.use(captionsRouter);
 router.use(feedRouter);
+router.use(neynarRouter);
 
 export default router;

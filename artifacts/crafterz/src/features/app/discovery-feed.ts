@@ -2,7 +2,7 @@ import type { ServerActivity } from "./runtime-api";
 
 export type DiscoveryFeedItem = {
   name: string;
-  emojis: [string, string?];
+  emoji: string;
   tier: "COMMON" | "RARE" | "LEGENDARY";
   discoverer: string;
   time: string;
@@ -55,9 +55,7 @@ export function toDiscoveryFeed(events: ServerActivity[]): DiscoveryFeedItem[] {
 
       return {
         name: itemName,
-        emojis: (eventEmojis.length > 0
-          ? [String(eventEmojis[0]), eventEmojis[1] ? String(eventEmojis[1]) : undefined]
-          : ["✨"]) as [string, string?],
+        emoji: eventEmojis.length > 0 ? String(eventEmojis[0]) : "✨",
         tier,
         discoverer: event.username ?? event.agentId,
         time: getRelativeTime(event.timestamp),

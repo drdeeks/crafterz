@@ -7,24 +7,24 @@
 // - Genesis items = Generation 0
 // - Crafted items = max(genA, genB) + 1
 // - Server-validated MegaMind detection (first global discovery only)
-// - Persistent emoji associations per item
+// - Single best emoji per item (duplication across items is allowed)
 // ============================================================================
 
 export type ItemTier = "GENESIS" | "COMMON" | "RARE" | "LEGENDARY";
 
 export interface CraftedItem {
   name: string;
-  emojis: [string, string?];
+  emoji: string;
   tier: ItemTier;
-  isMegaMind: boolean; // true ONLY if first ever global discovery
-  recipe: string; // "Fire + Water"
-  generation: number; // 0 = genesis, 1 = first craft, etc.
+  isMegaMind: boolean;
+  recipe: string;
+  generation: number;
 }
 
 export interface GenesisItem {
   id: string;
   name: string;
-  emojis: [string, string?];
+  emoji: string;
   tier: "GENESIS";
   category: string;
   generation: 0;
@@ -33,49 +33,39 @@ export interface GenesisItem {
 // ─── 7 Genesis Elements (Generation 0) ───────────────────────────────────────
 
 export const GENESIS_ITEMS: GenesisItem[] = [
-  { id: "water", name: "Water", emojis: ["💧"], tier: "GENESIS", category: "element", generation: 0 },
-  { id: "fire",  name: "Fire",  emojis: ["🔥"], tier: "GENESIS", category: "element", generation: 0 },
-  { id: "earth", name: "Earth", emojis: ["🌍"], tier: "GENESIS", category: "element", generation: 0 },
-  { id: "air",   name: "Air",   emojis: ["💨"], tier: "GENESIS", category: "element", generation: 0 },
-  { id: "sun",   name: "Sun",   emojis: ["☀️"], tier: "GENESIS", category: "celestial", generation: 0 },
-  { id: "moon",  name: "Moon",  emojis: ["🌙"], tier: "GENESIS", category: "celestial", generation: 0 },
-  { id: "time",  name: "Time",  emojis: ["⏰"], tier: "GENESIS", category: "abstract", generation: 0 },
+  { id: "water", name: "Water", emoji: "💧", tier: "GENESIS", category: "element", generation: 0 },
+  { id: "fire",  name: "Fire",  emoji: "🔥", tier: "GENESIS", category: "element", generation: 0 },
+  { id: "earth", name: "Earth", emoji: "🌍", tier: "GENESIS", category: "element", generation: 0 },
+  { id: "air",   name: "Air",   emoji: "💨", tier: "GENESIS", category: "element", generation: 0 },
+  { id: "sun",   name: "Sun",   emoji: "☀️", tier: "GENESIS", category: "celestial", generation: 0 },
+  { id: "moon",  name: "Moon",  emoji: "🌙", tier: "GENESIS", category: "celestial", generation: 0 },
+  { id: "time",  name: "Time",  emoji: "⏳", tier: "GENESIS", category: "abstract", generation: 0 },
 ];
 
 // ─── Definitive Combination Registry (fallback when AI is unavailable) ────────
-// Only covers genesis + genesis combinations. AI handles everything else.
 
 const CRAFT_RECIPES: Record<string, Omit<CraftedItem, "isMegaMind" | "generation">> = {
-  // Element + Element
-  "air+earth":  { name: "Dust",     emojis: ["🌫️", "🏜️"],  tier: "COMMON",    recipe: "Air + Earth" },
-  "air+fire":   { name: "Plasma",   emojis: ["⚡", "🔥"],   tier: "RARE",      recipe: "Air + Fire" },
-  "air+water":  { name: "Mist",     emojis: ["🌫️", "💧"],  tier: "COMMON",    recipe: "Air + Water" },
-  "earth+fire": { name: "Lava",     emojis: ["🌋", "🔴"],   tier: "RARE",      recipe: "Earth + Fire" },
-  "earth+water":{ name: "Mud",      emojis: ["💩", "🏞️"],  tier: "COMMON",    recipe: "Earth + Water" },
-  "fire+water": { name: "Steam",    emojis: ["💨", "🌫️"],  tier: "COMMON",    recipe: "Fire + Water" },
-
-  // Celestial + Element
-  "fire+sun":   { name: "Flare",    emojis: ["☀️", "🔥"],   tier: "RARE",      recipe: "Fire + Sun" },
-  "moon+water": { name: "Tide",     emojis: ["🌊", "🌙"],   tier: "RARE",      recipe: "Moon + Water" },
-  "sun+water":  { name: "Rainbow",  emojis: ["🌈", "💧"],   tier: "RARE",      recipe: "Sun + Water" },
-  "sun+earth":  { name: "Desert",   emojis: ["🏜️", "☀️"],  tier: "COMMON",    recipe: "Sun + Earth" },
-  "sun+air":    { name: "Breeze",   emojis: ["🌬️", "☀️"],  tier: "COMMON",    recipe: "Sun + Air" },
-  "moon+earth": { name: "Tide Pool",emojis: ["🌊", "🪨"],   tier: "COMMON",    recipe: "Moon + Earth" },
-  "moon+fire":  { name: "Ember",    emojis: ["🔥", "🌙"],   tier: "COMMON",    recipe: "Moon + Fire" },
-  "moon+air":   { name: "Night Wind",emojis: ["🌬️", "🌙"],  tier: "COMMON",    recipe: "Moon + Air" },
-
-  // Abstract + Element
-  "earth+time": { name: "Fossil",   emojis: ["🦴", "🪨"],   tier: "RARE",      recipe: "Earth + Time" },
-  "fire+time":  { name: "Ash",      emojis: ["🌫️", "⏰"],   tier: "COMMON",    recipe: "Fire + Time" },
-  "water+time": { name: "Ice",      emojis: ["🧊", "💧"],   tier: "COMMON",    recipe: "Water + Time" },
-  "air+time":   { name: "Erosion",  emojis: ["🏜️", "⏰"],   tier: "COMMON",    recipe: "Air + Time" },
-
-  // Celestial + Celestial
-  "moon+sun":   { name: "Eclipse",  emojis: ["🌘", "☀️"],   tier: "LEGENDARY", recipe: "Moon + Sun" },
-
-  // Abstract + Celestial
-  "sun+time":   { name: "Season",   emojis: ["🍂", "☀️"],   tier: "RARE",      recipe: "Sun + Time" },
-  "moon+time":  { name: "Phase",    emojis: ["🌗", "⏰"],   tier: "RARE",      recipe: "Moon + Time" },
+  "air+earth":   { name: "Dust",       emoji: "🌫️", tier: "COMMON",    recipe: "Air + Earth" },
+  "air+fire":    { name: "Plasma",     emoji: "⚡",  tier: "RARE",      recipe: "Air + Fire" },
+  "air+water":   { name: "Mist",       emoji: "🌫️", tier: "COMMON",    recipe: "Air + Water" },
+  "earth+fire":  { name: "Lava",       emoji: "🌋",  tier: "RARE",      recipe: "Earth + Fire" },
+  "earth+water": { name: "Mud",        emoji: "🟫",  tier: "COMMON",    recipe: "Earth + Water" },
+  "fire+water":  { name: "Steam",      emoji: "💨",  tier: "COMMON",    recipe: "Fire + Water" },
+  "fire+sun":    { name: "Flare",      emoji: "🌟",  tier: "RARE",      recipe: "Fire + Sun" },
+  "moon+water":  { name: "Tide",       emoji: "🌊",  tier: "RARE",      recipe: "Moon + Water" },
+  "sun+water":   { name: "Rainbow",    emoji: "🌈",  tier: "RARE",      recipe: "Sun + Water" },
+  "sun+earth":   { name: "Desert",     emoji: "🏜️", tier: "COMMON",    recipe: "Sun + Earth" },
+  "sun+air":     { name: "Breeze",     emoji: "🌬️", tier: "COMMON",    recipe: "Sun + Air" },
+  "moon+earth":  { name: "Tide Pool",  emoji: "🌊",  tier: "COMMON",    recipe: "Moon + Earth" },
+  "moon+fire":   { name: "Ember",      emoji: "🔥",  tier: "COMMON",    recipe: "Moon + Fire" },
+  "moon+air":    { name: "Night Wind", emoji: "🌬️", tier: "COMMON",    recipe: "Moon + Air" },
+  "earth+time":  { name: "Fossil",     emoji: "🦴",  tier: "RARE",      recipe: "Earth + Time" },
+  "fire+time":   { name: "Ash",        emoji: "🌫️", tier: "COMMON",    recipe: "Fire + Time" },
+  "water+time":  { name: "Ice",        emoji: "🧊",  tier: "COMMON",    recipe: "Water + Time" },
+  "air+time":    { name: "Erosion",    emoji: "🏔️", tier: "COMMON",    recipe: "Air + Time" },
+  "moon+sun":    { name: "Eclipse",    emoji: "🌘",  tier: "LEGENDARY", recipe: "Moon + Sun" },
+  "sun+time":    { name: "Season",     emoji: "🍂",  tier: "RARE",      recipe: "Sun + Time" },
+  "moon+time":   { name: "Phase",      emoji: "🌗",  tier: "RARE",      recipe: "Moon + Time" },
 };
 
 // ─── Deterministic Fallback Craft ────────────────────────────────────────────
@@ -106,7 +96,7 @@ export interface DiscoveredItem {
   name: string;
   tier: string;
   generation: number;
-  emojis: string[];
+  emoji: string;
 }
 
 export interface AiCraftResult {
@@ -115,7 +105,7 @@ export interface AiCraftResult {
   conflict?: boolean;
   result?: {
     name: string;
-    emojis: [string, string?];
+    emoji: string;
     tier: ItemTier;
     isMegaMind: boolean;
     generation: number;

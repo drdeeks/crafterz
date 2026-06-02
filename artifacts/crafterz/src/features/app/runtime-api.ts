@@ -49,7 +49,7 @@ export type ServerTask = {
   claimedAt?: number;
   targetItem?: string;
   targetHint?: string;
-  targetEmojis?: [string, string?];
+  targetEmoji?: string;
   updatedAt: string;
 };
 

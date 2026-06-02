@@ -20,24 +20,24 @@ export const EVM_CHAINS: EvmChainOption[] = [
 ];
 
 export const INITIAL_INVENTORY: AppInventoryItem[] = [
-  { uid: 'u-water', id: 'water', name: 'Water', emojis: ['💧'],  tier: 'GENESIS', generation: 0 },
-  { uid: 'u-fire',  id: 'fire',  name: 'Fire',  emojis: ['🔥'],  tier: 'GENESIS', generation: 0 },
-  { uid: 'u-earth', id: 'earth', name: 'Earth', emojis: ['🌍'],  tier: 'GENESIS', generation: 0 },
-  { uid: 'u-air',   id: 'air',   name: 'Air',   emojis: ['💨'],  tier: 'GENESIS', generation: 0 },
-  { uid: 'u-sun',   id: 'sun',   name: 'Sun',   emojis: ['☀️'],  tier: 'GENESIS', generation: 0 },
-  { uid: 'u-moon',  id: 'moon',  name: 'Moon',  emojis: ['🌙'],  tier: 'GENESIS', generation: 0 },
-  { uid: 'u-time',  id: 'time',  name: 'Time',  emojis: ['⏰'],  tier: 'GENESIS', generation: 0 },
+  { uid: 'u-water', id: 'water', name: 'Water', emoji: '💧', tier: 'GENESIS', generation: 0 },
+  { uid: 'u-fire',  id: 'fire',  name: 'Fire',  emoji: '🔥', tier: 'GENESIS', generation: 0 },
+  { uid: 'u-earth', id: 'earth', name: 'Earth', emoji: '🌍', tier: 'GENESIS', generation: 0 },
+  { uid: 'u-air',   id: 'air',   name: 'Air',   emoji: '💨', tier: 'GENESIS', generation: 0 },
+  { uid: 'u-sun',   id: 'sun',   name: 'Sun',   emoji: '☀️', tier: 'GENESIS', generation: 0 },
+  { uid: 'u-moon',  id: 'moon',  name: 'Moon',  emoji: '🌙', tier: 'GENESIS', generation: 0 },
+  { uid: 'u-time',  id: 'time',  name: 'Time',  emoji: '⏳', tier: 'GENESIS', generation: 0 },
 ];
 
-export const TARGET_POOL: Array<{ name: string; hint: string; emojis: [string, string?] }> = [
-  { name: 'Lava',    hint: 'Formed when earth meets fire',     emojis: ['🌋', '🔴'] },
-  { name: 'Steam',   hint: 'What fire does to water',          emojis: ['💨', '🌫️'] },
-  { name: 'Fossil',  hint: 'Earth preserves things over time', emojis: ['🦴', '🪨'] },
-  { name: 'Tide',    hint: 'The moon pulls the ocean',         emojis: ['🌊', '🌙'] },
-  { name: 'Eclipse', hint: 'Two celestial bodies aligned',     emojis: ['🌘', '☀️'] },
-  { name: 'Plasma',  hint: 'Air superheated by fire',          emojis: ['⚡', '🔥'] },
-  { name: 'Rainbow', hint: 'Sunlight through water droplets',  emojis: ['🌈', '💧'] },
-  { name: 'Ice',     hint: 'Water frozen by time',             emojis: ['🧊', '💧'] },
+export const TARGET_POOL: Array<{ name: string; hint: string; emoji: string }> = [
+  { name: 'Lava',    hint: 'Formed when earth meets fire',     emoji: '🌋' },
+  { name: 'Steam',   hint: 'What fire does to water',          emoji: '💨' },
+  { name: 'Fossil',  hint: 'Earth preserves things over time', emoji: '🦴' },
+  { name: 'Tide',    hint: 'The moon pulls the ocean',         emoji: '🌊' },
+  { name: 'Eclipse', hint: 'Two celestial bodies aligned',     emoji: '🌘' },
+  { name: 'Plasma',  hint: 'Air superheated by fire',          emoji: '⚡' },
+  { name: 'Rainbow', hint: 'Sunlight through water droplets',  emoji: '🌈' },
+  { name: 'Ice',     hint: 'Water frozen by time',             emoji: '🧊' },
 ];
 
 export const TIER_BADGE: Record<string, string> = {
