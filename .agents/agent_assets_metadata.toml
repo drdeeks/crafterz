@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "OS_pQj75NWsgbpj4ouDvR"
+uri = "file://crafterz-backup.tar.gz"
+type = "unspecified"
+title = "CrafterZ — full project backup"
