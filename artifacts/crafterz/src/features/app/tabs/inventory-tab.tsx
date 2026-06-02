@@ -6,14 +6,12 @@ export function InventoryTab({
   filteredInventory,
   onAddToCanvas,
   renderEmojis,
-  tierBadge,
 }: {
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
   filteredInventory: AppInventoryItem[];
   onAddToCanvas: (item: AppInventoryItem) => void;
   renderEmojis: EmojiRenderer;
-  tierBadge: Record<string, string>;
 }) {
   return (
     <div className="p-3">
@@ -26,25 +24,46 @@ export function InventoryTab({
           onChange={(e) => onSearchQueryChange(e.target.value)}
         />
       </div>
-      <div className="grid grid-cols-4 gap-2">
+
+      <div className="flex flex-wrap gap-2">
         {filteredInventory.map((item) => (
           <button
             key={item.uid}
             onClick={() => onAddToCanvas(item)}
-            className={`rounded-xl border p-2 flex flex-col items-center gap-1 transition-all active:scale-90 ${item.isMegaMind && !item.isMinted ? 'bg-amber-950/25 border-amber-500/35 hover:border-amber-400' : item.isMinted ? 'bg-emerald-950/15 border-emerald-600/30' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'}`}
+            className={`relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 border transition-all active:scale-95 select-none
+              ${item.isMegaMind && !item.isMinted
+                ? 'bg-amber-950/30 border-amber-500/50 hover:border-amber-400'
+                : item.isMinted
+                  ? 'bg-emerald-950/20 border-emerald-600/40 hover:border-emerald-500'
+                  : item.tier === 'LEGENDARY'
+                    ? 'bg-amber-900/10 border-amber-700/30 hover:border-amber-600/50'
+                    : item.tier === 'RARE'
+                      ? 'bg-blue-900/10 border-blue-700/30 hover:border-blue-600/50'
+                      : item.tier === 'GENESIS'
+                        ? 'bg-purple-900/10 border-purple-700/30 hover:border-purple-600/50'
+                        : 'bg-zinc-900 border-zinc-800 hover:border-zinc-600'
+              }`}
           >
+            {/* Star badge — top right of pill */}
             {item.isMegaMind && !item.isMinted && (
-              <span className="text-amber-400 text-[9px] font-bold leading-none">⚡ MEGA</span>
+              <span className="absolute -top-1.5 -right-0.5 text-[11px] leading-none text-amber-400" style={{ textShadow: '0 0 6px #f59e0b88' }}>★</span>
             )}
             {item.isMinted && (
-              <span className="text-emerald-400 text-[9px] font-bold leading-none">✓ MINTED</span>
+              <span className="absolute -top-1.5 -right-0.5 text-[11px] leading-none text-emerald-400">✓</span>
             )}
-            <span className="text-2xl leading-none">{renderEmojis(item.emojis)}</span>
-            <span className="text-white text-[11px] font-semibold text-center leading-tight">{item.name}</span>
-            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${tierBadge[item.tier]}`}>{item.tier}</span>
+
+            <span className="text-lg leading-none">{renderEmojis(item.emojis)}</span>
+            <span className={`text-sm font-semibold leading-none whitespace-nowrap
+              ${item.isMegaMind && !item.isMinted ? 'text-amber-200' : item.isMinted ? 'text-emerald-200' : 'text-white'}`}>
+              {item.name}
+            </span>
           </button>
         ))}
       </div>
+
+      {filteredInventory.length === 0 && (
+        <div className="text-center py-12 text-zinc-600 text-sm">No items found</div>
+      )}
     </div>
   );
 }

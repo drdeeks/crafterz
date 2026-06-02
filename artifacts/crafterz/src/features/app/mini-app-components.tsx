@@ -12,6 +12,7 @@ export const AppHeader = memo(function AppHeader({
   myPoints,
   username,
   weatherEvent,
+  onAvatarClick,
 }: {
   syncColor: string;
   syncLabel: string;
@@ -20,19 +21,23 @@ export const AppHeader = memo(function AppHeader({
   myPoints: number;
   username: string;
   weatherEvent?: WeatherEvent | null;
+  onAvatarClick?: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-900 border-b border-zinc-800 flex-shrink-0">
-      <div className="flex items-center gap-2 min-w-0 flex-1">
-        <span className="text-lg font-black tracking-tight text-white flex-shrink-0">CrafterZ</span>
-        <span className="inline-flex items-center gap-1.5 text-[10px] text-zinc-400 border border-zinc-700 rounded-full px-2 py-0.5 flex-shrink-0">
-          <span className={`w-1.5 h-1.5 rounded-full ${syncColor}`} />
+    <div className="flex items-center justify-between px-3 py-2 bg-zinc-900 border-b border-zinc-800 flex-shrink-0 gap-2">
+      {/* Left: brand + status badges */}
+      <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
+        <span className="text-base font-black tracking-tight text-white flex-shrink-0">CrafterZ</span>
+        <span className="inline-flex items-center gap-1 text-[9px] text-zinc-400 border border-zinc-700 rounded-full px-1.5 py-0.5 flex-shrink-0">
+          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${syncColor}`} />
           {syncLabel}
         </span>
-        {isAdmin && <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-red-500/20 text-red-400 border border-red-500/30 uppercase tracking-wider flex-shrink-0">Admin</span>}
+        {isAdmin && (
+          <span className="text-[9px] px-1 py-0.5 rounded font-bold bg-red-500/20 text-red-400 border border-red-500/30 uppercase tracking-wider flex-shrink-0">Admin</span>
+        )}
         {weatherEvent && (
           <span
-            className="inline-flex items-center gap-1 text-[10px] rounded-full px-2 py-0.5 font-bold border flex-shrink-0 truncate max-w-[120px]"
+            className="inline-flex items-center gap-0.5 text-[9px] rounded-full px-1.5 py-0.5 font-bold border flex-shrink-0 max-w-[90px] overflow-hidden"
             style={{
               borderColor: weatherEvent.colorHint + '55',
               color: weatherEvent.colorHint,
@@ -40,15 +45,29 @@ export const AppHeader = memo(function AppHeader({
             }}
             title={weatherEvent.description}
           >
-            {weatherEvent.icon} <span className="truncate">{weatherEvent.name}</span>
+            <span className="flex-shrink-0">{weatherEvent.icon}</span>
+            <span className="truncate">{weatherEvent.name}</span>
           </span>
         )}
       </div>
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <div className="flex items-center gap-1.5 text-xs text-zinc-400">Rank <span className="text-white font-bold">#{myRank}</span></div>
-        <div className="w-px h-3 bg-zinc-700" />
-        <span className="text-amber-400 text-xs font-bold">{myPoints.toLocaleString()} pts</span>
-        <img src={`https://api.dicebear.com/9.x/lorelei/svg?seed=${username}`} className="w-7 h-7 rounded-full border border-zinc-700" alt="" />
+
+      {/* Right: rank + pts + avatar */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex flex-col items-end leading-none">
+          <span className="text-[9px] text-zinc-500">Rank <span className="text-white font-bold">#{myRank}</span></span>
+          <span className="text-amber-400 text-[10px] font-bold mt-0.5">{myPoints.toLocaleString()} pts</span>
+        </div>
+        <button
+          onClick={onAvatarClick}
+          className="rounded-full border-2 border-zinc-700 hover:border-zinc-500 transition-colors flex-shrink-0 focus:outline-none"
+          aria-label="Open settings"
+        >
+          <img
+            src={`https://api.dicebear.com/9.x/lorelei/svg?seed=${username}`}
+            className="w-8 h-8 rounded-full block"
+            alt=""
+          />
+        </button>
       </div>
     </div>
   );

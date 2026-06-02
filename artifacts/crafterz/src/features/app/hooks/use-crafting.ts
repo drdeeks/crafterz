@@ -50,6 +50,8 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ instanceId: string; startX: number; startY: number; itemX: number; itemY: number } | null>(null);
+  // Prevents simultaneous craft attempts
+  const craftingRef = useRef(false);
   const globalRegistryRef = useRef<Set<string>>(new Set());
   const inventoryNamesRef = useRef<Set<string>>(
     new Set(INITIAL_INVENTORY.map((i) => i.name.toLowerCase().trim())),
@@ -57,14 +59,18 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
   const inventoryRef = useRef<AppInventoryItem[]>(inventory);
   inventoryRef.current = inventory;
 
+  // Probe with valid params — genA/genB required by schema
   useEffect(() => {
     fetch('/api/ai-craft', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ itemA: 'test', itemB: 'check', discoveredItems: [] }),
+      body: JSON.stringify({ itemA: 'test', itemB: 'check', genA: 0, genB: 0, discoveredItems: [] }),
     })
       .then((r) => r.json())
-      .then((d) => { setAiEnabled(d.ok === true || (d.error && !d.error.includes('AI_API_KEY'))); })
+      .then((d: { ok?: boolean; error?: string }) => {
+        // Only false if server explicitly says the key is missing
+        setAiEnabled(!d.error?.includes('AI_API_KEY'));
+      })
       .catch(() => setAiEnabled(false));
   }, []);
 
@@ -83,6 +89,7 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
   const clearCanvas = useCallback(() => {
     setCanvasItems([]);
     setCombining(null);
+    craftingRef.current = false;
   }, []);
 
   const handlePointerDown = useCallback((e: React.PointerEvent, instanceId: string) => {
@@ -117,14 +124,16 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
         const target = prev.find((i) => i.instanceId !== instanceId && Math.hypot(i.x - finalX, i.y - finalY) < 58);
 
         if (target) {
-          if (craftzRef.current < CRAFTZ_COST) {
+          // Guard: not enough Craftz OR another craft is already in progress
+          if (craftzRef.current < CRAFTZ_COST || craftingRef.current) {
             return prev.map((i) => i.instanceId === instanceId ? { ...i, x: finalX, y: finalY, isDragging: false } : i);
           }
 
+          craftingRef.current = true;
           const midX = (finalX + target.x) / 2;
           const midY = (finalY + target.y) / 2;
           setCombining({ a: instanceId, b: target.instanceId });
-          setCraftz((c) => { const next = Math.max(0, c - CRAFTZ_COST); craftzRef.current = next; return next; });
+          // ── DO NOT deduct Craftz yet — only charge on a successful craft ──
 
           void (async () => {
             let crafted = null;
@@ -148,12 +157,15 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
             }
 
             if (!crafted) {
+              // No recipe found — reset with no cost, no flicker
+              craftingRef.current = false;
               setCombining(null);
-              // Strict policy: refund full Craftz cost when no result is produced
-              setCraftz((c) => { const next = Math.min(CRAFTZ_MAX, c + CRAFTZ_COST); craftzRef.current = next; return next; });
               setCanvasItems((curr) => curr.map((i) => i.instanceId === instanceId ? { ...i, x: finalX, y: finalY, isDragging: false } : i));
               return;
             }
+
+            // ── Recipe found: now deduct Craftz ──
+            setCraftz((c) => { const next = Math.max(0, c - CRAFTZ_COST); craftzRef.current = next; return next; });
 
             const normalizedName = crafted.name.toLowerCase().trim();
             const alreadyInInventory = inventoryNamesRef.current.has(normalizedName);
@@ -190,6 +202,7 @@ export function useCrafting(opts: UseCraftingOptions): UseCraftingReturn {
               ? { uid: `u-existing-${normalizedName}`, id: normalizedName, name: crafted.name, emojis: crafted.emojis, tier: crafted.tier, generation: crafted.generation, isMegaMind: false, isMinted: false }
               : { uid: `u-crafted-${newId()}`, id: normalizedName, name: crafted.name, emojis: crafted.emojis, tier: crafted.tier, recipe: crafted.recipe, generation: crafted.generation, isMegaMind: crafted.isMegaMind, isMinted: false };
 
+            craftingRef.current = false;
             setCombining(null);
             setCanvasItems((curr) => {
               const filtered = curr.filter((i) => i.instanceId !== instanceId && i.instanceId !== target.instanceId);

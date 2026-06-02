@@ -20,7 +20,7 @@ import { useCrafting } from './hooks/use-crafting';
 import { useWeather } from './hooks/use-weather';
 import { useAgents } from './hooks/use-agents';
 import { AppHeader, CraftingCanvas, CraftzBar } from './mini-app-components';
-import { InventoryTab, MegaMindsTab, TasksTab, LeaderboardTab, FeedTab, AdminTab, AgentsTab } from './tabs';
+import { InventoryTab, MegaMindsTab, TasksTab, LeaderboardTab, FeedTab, AdminTab, AgentsTab, SettingsModal } from './tabs';
 
 export function MiniApp() {
   const [activeTab, setActiveTab] = useState<AppTab>('inventory');
@@ -29,6 +29,7 @@ export function MiniApp() {
   const [gmSending, setGmSending] = useState(false);
   const [adminFeedback, setAdminFeedback] = useState<string | null>(null);
   const [captions, setCaptions] = useState<ServerCaption[]>([]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const { craftz, craftzRef, setCraftz } = useCraftz();
   const { currentEvent: weatherEvent } = useWeather();
@@ -259,6 +260,20 @@ export function MiniApp() {
         </div>
       )}
 
+      {settingsOpen && (
+        <SettingsModal
+          onClose={() => setSettingsOpen(false)}
+          username="you"
+          craftz={craftz}
+          craftzMax={CRAFTZ_MAX}
+          aiEnabled={aiEnabled}
+          weatherEvent={weatherEvent}
+          activeAgentCount={agentsState.agents.filter((a) => a.isRentedByMe).length}
+          myPoints={myPoints}
+          myRank={typeof myRank === 'number' ? myRank : 99}
+        />
+      )}
+
       <AppHeader
         syncColor={syncColor}
         syncLabel={syncLabel}
@@ -267,6 +282,7 @@ export function MiniApp() {
         myPoints={myPoints}
         username="you"
         weatherEvent={weatherEvent}
+        onAvatarClick={() => setSettingsOpen(true)}
       />
 
       <CraftingCanvas
@@ -293,7 +309,7 @@ export function MiniApp() {
 
       <div className="flex-1 overflow-y-auto min-h-0 bg-zinc-950">
         {activeTab === 'inventory' && (
-          <InventoryTab searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} filteredInventory={filteredInventory} onAddToCanvas={addToCanvas} renderEmojis={renderEmojis} tierBadge={TIER_BADGE} />
+          <InventoryTab searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} filteredInventory={filteredInventory} onAddToCanvas={addToCanvas} renderEmojis={renderEmojis} />
         )}
         {activeTab === 'megaminds' && (
           <MegaMindsTab

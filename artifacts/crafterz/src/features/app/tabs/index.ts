@@ -5,3 +5,4 @@ export { LeaderboardTab } from './leaderboard-tab';
 export { FeedTab } from './feed-tab';
 export { AdminTab } from './admin-tab';
 export { AgentsTab } from './agents-tab';
+export { SettingsModal } from './settings-modal';
