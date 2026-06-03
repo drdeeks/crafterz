@@ -21,6 +21,37 @@ router.get("/captions", async (req, res) => {
   }
 });
 
+const submitCaptionSchema = z.object({
+  captionText: z.string().min(5).max(200),
+  username: z.string().min(1).max(32).optional(),
+});
+
+router.post("/captions", async (req, res) => {
+  try {
+    if (!(await isEnabled("comedyFeed"))) {
+      return res.json({ ok: false, error: "Comedy feed disabled" });
+    }
+    const parsed = submitCaptionSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ ok: false, error: "Invalid caption text (5–200 chars)" });
+    }
+    const { captionText, username = "anonymous" } = parsed.data;
+    const { generateCaption } = await import("../lib/caption-state.js");
+    const caption = await generateCaption({
+      itemName: "Field Dispatch",
+      discovererUsername: username,
+      tier: "COMMON",
+      ingredients: [],
+      isMegaMind: false,
+      customText: captionText,
+    });
+    res.json({ ok: true, caption });
+  } catch (err) {
+    console.error("Caption submit error:", err);
+    res.status(500).json({ ok: false, error: "Internal server error" });
+  }
+});
+
 const idSchema = z.object({ id: z.string().min(1).max(80) });
 
 router.post("/captions/:id/react", async (req, res) => {

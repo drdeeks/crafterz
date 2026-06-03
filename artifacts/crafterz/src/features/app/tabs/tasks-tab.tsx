@@ -51,7 +51,77 @@ export function TasksTab({
           <StandardTask key={task.id} task={task} onClaimTask={onClaimTask} />
         ))}
 
+      <WeeklyBonus />
+
+      <CraftzEconomyTip />
+
       <div className="pb-4" />
+    </div>
+  );
+}
+
+const WEEKLY_CHALLENGES = [
+  { icon: '🔬', label: 'Discovery Chain', desc: 'Craft 5 items in a single session', reward: '+100 pts', progress: 2, required: 5, active: true },
+  { icon: '⚔️', label: 'Heist Veteran', desc: 'Win 2 heists this week', reward: '+150 pts + 40⚡', progress: 0, required: 2, active: true },
+  { icon: '🌦', label: 'Weather Rider', desc: 'Craft during 3 different weather events', reward: '+200 pts', progress: 1, required: 3, active: true },
+];
+
+function WeeklyBonus() {
+  const now = new Date();
+  const endOfWeek = new Date(now);
+  endOfWeek.setDate(now.getDate() + (7 - now.getDay()));
+  endOfWeek.setHours(23, 59, 59);
+  const daysLeft = Math.ceil((endOfWeek.getTime() - now.getTime()) / (24 * 3600000));
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between px-1">
+        <p className="text-zinc-500 text-xs font-semibold">Weekly Challenges</p>
+        <span className="text-zinc-700 text-[10px]">{daysLeft}d remaining</span>
+      </div>
+      {WEEKLY_CHALLENGES.map((ch) => {
+        const pct = Math.min(100, Math.round((ch.progress / ch.required) * 100));
+        return (
+          <div key={ch.label} className={`rounded-xl border p-3 ${ch.progress >= ch.required ? 'bg-emerald-950/10 border-emerald-600/25' : 'bg-zinc-900/60 border-zinc-800'}`}>
+            <div className="flex items-start gap-2.5">
+              <span className="text-xl flex-shrink-0">{ch.icon}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <p className="text-white text-xs font-semibold">{ch.label}</p>
+                  <span className="text-amber-400 text-[10px] font-bold">{ch.reward}</span>
+                </div>
+                <p className="text-zinc-500 text-[10px] mt-0.5">{ch.desc}</p>
+                {ch.required > 1 && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between text-[10px] mb-1">
+                      <span className="text-zinc-600">{ch.progress}/{ch.required}</span>
+                      <span style={{ color: pct >= 100 ? '#22c55e' : '#f59e0b' }}>{pct}%</span>
+                    </div>
+                    <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: pct >= 100 ? '#22c55e' : '#f59e0b' }} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CraftzEconomyTip() {
+  const tips = [
+    '💡 Hints cost 5 Craftz each. Use them when you\'re stuck on a combination.',
+    '💡 Heist victories award +30 Craftz in addition to points.',
+    '💡 Hiring an AI Brain agent stacks with weather buffs — time your rentals accordingly.',
+    '💡 First-ever discoveries award a +50 Craftz bonus on top of standard rewards.',
+  ];
+  const tip = tips[new Date().getDate() % tips.length];
+  return (
+    <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-xl px-3 py-2.5">
+      <p className="text-zinc-500 text-[10px] leading-relaxed">{tip}</p>
     </div>
   );
 }

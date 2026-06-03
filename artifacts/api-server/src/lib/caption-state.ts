@@ -116,6 +116,7 @@ export async function generateCaption(input: {
   tier: string;
   ingredients: string[];
   isMegaMind: boolean;
+  customText?: string;
 }): Promise<CaptionRecord> {
   const captions = (await readJson<CaptionRecord[]>(CAPTIONS_KEY)) ?? [];
   const id = `cap-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -123,13 +124,19 @@ export async function generateCaption(input: {
   let captionText: string;
   let isAiGenerated = false;
 
-  const aiText = await tryAiCaption(input.itemName, input.discovererUsername, input.tier, input.ingredients);
-  if (aiText && moderateCaption(aiText)) {
-    captionText = aiText;
-    isAiGenerated = true;
+  if (input.customText && moderateCaption(input.customText)) {
+    captionText = input.customText.slice(0, 200);
+  } else if (input.customText) {
+    captionText = SAFE_FALLBACK(input.discovererUsername, input.itemName);
   } else {
-    const template = pickTemplate(input.itemName, input.discovererUsername, input.tier, input.ingredients);
-    captionText = moderateCaption(template) ? template : SAFE_FALLBACK(input.discovererUsername, input.itemName);
+    const aiText = await tryAiCaption(input.itemName, input.discovererUsername, input.tier, input.ingredients);
+    if (aiText && moderateCaption(aiText)) {
+      captionText = aiText;
+      isAiGenerated = true;
+    } else {
+      const template = pickTemplate(input.itemName, input.discovererUsername, input.tier, input.ingredients);
+      captionText = moderateCaption(template) ? template : SAFE_FALLBACK(input.discovererUsername, input.itemName);
+    }
   }
 
   const caption: CaptionRecord = {
@@ -155,6 +162,10 @@ export async function generateCaption(input: {
 export async function getCaptions(limit = 20): Promise<CaptionRecord[]> {
   const captions = (await readJson<CaptionRecord[]>(CAPTIONS_KEY)) ?? [];
   return captions.filter((c) => !c.isSuppressed).slice(0, limit);
+}
+
+export async function getRecentCaptions(limit = 5): Promise<CaptionRecord[]> {
+  return getCaptions(limit);
 }
 
 export async function reactToCaption(captionId: string): Promise<boolean> {

@@ -6,3 +6,8 @@ export { FeedTab } from './feed-tab';
 export { AdminTab } from './admin-tab';
 export { AgentsTab } from './agents-tab';
 export { SettingsModal } from './settings-modal';
+export { GazetteTab } from './gazette-tab';
+export { ObservatoryTab } from './observatory-tab';
+export { ArchiveTab } from './archive-tab';
+export { DashboardTab } from './dashboard-tab';
+export { OnboardingFlow, checkOnboardingDone, markOnboardingDone } from './onboarding-flow';

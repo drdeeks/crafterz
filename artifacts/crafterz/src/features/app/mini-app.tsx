@@ -21,10 +21,15 @@ import { useCrafting } from './hooks/use-crafting';
 import { useWeather } from './hooks/use-weather';
 import { useAgents } from './hooks/use-agents';
 import { AppHeader, CraftingCanvas, CraftzBar } from './mini-app-components';
-import { InventoryTab, MegaMindsTab, TasksTab, LeaderboardTab, FeedTab, AdminTab, AgentsTab, SettingsModal } from './tabs';
+import {
+  InventoryTab, MegaMindsTab, TasksTab, AdminTab, AgentsTab, SettingsModal,
+  GazetteTab, ObservatoryTab, ArchiveTab, DashboardTab,
+  OnboardingFlow, checkOnboardingDone,
+} from './tabs';
 
 export function MiniApp() {
-  const [activeTab, setActiveTab] = useState<AppTab>('inventory');
+  const [onboardingDone, setOnboardingDone] = useState<boolean>(() => checkOnboardingDone());
+  const [activeTab, setActiveTab] = useState<AppTab>('forge');
   const [searchQuery, setSearchQuery] = useState('');
   const [gmChain, setGmChain] = useState(EVM_CHAINS[0].id);
   const [gmSending, setGmSending] = useState(false);
@@ -36,9 +41,9 @@ export function MiniApp() {
   const avatarSrc = profile.pfpDataUrl ?? profile.pfpUrl ?? getAvatarUrl(profile.username);
 
   const { craftz, craftzRef, setCraftz } = useCraftz();
-  const { currentEvent: weatherEvent } = useWeather();
+  const { currentEvent: weatherEvent, secondsRemaining: weatherSecondsRemaining } = useWeather();
   const agentsState = useAgents();
-  const { events: feedEvents, loading: feedLoading } = useFeed(activeTab === 'feed');
+  const { events: feedEvents, loading: feedLoading } = useFeed(activeTab === 'gazette');
 
   const {
     myPoints, setMyPoints,
@@ -86,9 +91,9 @@ export function MiniApp() {
     onRefreshServerSnapshot: refreshServerSnapshot,
   });
 
-  // ─── Comedy feed: fetch when feed tab opens ────────────────────────────────
+  // ─── Comedy feed: fetch when gazette tab opens ─────────────────────────────
   useEffect(() => {
-    if (activeTab === 'feed') {
+    if (activeTab === 'gazette') {
       void fetchCaptions(20).then(setCaptions);
     }
   }, [activeTab]);
@@ -120,10 +125,8 @@ export function MiniApp() {
     if (!modal) return;
     if (modal.phase === 'prompt') {
       setMintModal((m) => m ? { ...m, phase: 'signing' } : null);
-      // Simulate wallet signing (~1.5s)
       setTimeout(() => {
         setMintModal((m) => m ? { ...m, phase: 'confirming' } : null);
-        // Simulate 3 on-chain confirmations (~3.5s)
         setTimeout(() => {
           const current = mintModalRef.current;
           if (!current) return;
@@ -179,7 +182,6 @@ export function MiniApp() {
     weapon: AppInventoryItem,
   ): Promise<{ heist: ServerHeist; pointsAwarded: number } | null> => {
     if (craftzRef.current < HEIST_COST) return null;
-    // Deduct entry fee autonomously (no wallet confirmation — in-game Craftz)
     setCraftz((c) => { const next = Math.max(0, c - HEIST_COST); craftzRef.current = next; return next; });
 
     const result = await apiInitiateHeist({
@@ -197,7 +199,6 @@ export function MiniApp() {
     });
 
     if (!result) {
-      // Network failure — refund entry fee
       setCraftz((c) => { const next = Math.min(CRAFTZ_MAX, c + HEIST_COST); craftzRef.current = next; return next; });
       return null;
     }
@@ -212,12 +213,10 @@ export function MiniApp() {
   // ─── Agent rental ───────────────────────────────────────────────────────────
   const handleRentAgent = useCallback(async (agentId: string, costCraftz: number) => {
     if (craftzRef.current < costCraftz) return;
-    // Deduct via in-game Craftz (x402 autonomous payment — no wallet popup)
     setCraftz((c) => { const next = Math.max(0, c - costCraftz); craftzRef.current = next; return next; });
 
     const result = await agentsState.rentAgent(agentId, 0, 'craftz');
     if (!result.ok) {
-      // Refund if server rejected
       setCraftz((c) => { const next = Math.min(CRAFTZ_MAX, c + costCraftz); craftzRef.current = next; return next; });
     } else if (result.buffApplied) {
       awardPoints(0, `🧠 ${result.buffApplied}`, '#8b5cf6');
@@ -242,12 +241,27 @@ export function MiniApp() {
   const craftzLow = craftz < CRAFTZ_COST;
 
   const tabs: Array<{ id: AppTab; label: string; badge: string | number | null; badgeAlert: boolean }> = [
-    { id: 'inventory',   label: '📚 Items',   badge: inventory.length,                       badgeAlert: false },
-    { id: 'megaminds',   label: '💎 Mega',    badge: megaMindItems.length,                   badgeAlert: false },
-    { id: 'tasks',       label: '✅ Tasks',   badge: `${tasksCompleted}/${tasksTotal}`,       badgeAlert: tasksPendingClaim > 0 },
-    { id: 'feed',        label: '📡 Feed',    badge: null,                                   badgeAlert: false },
-    { id: 'agents',      label: '🧠 Agents',  badge: agentsState.agents.filter((a) => a.isRentedByMe).length || null, badgeAlert: false },
+    { id: 'forge',       label: '⚗️ Forge',    badge: inventory.length,                         badgeAlert: false },
+    { id: 'megaminds',   label: '💎 Mega',      badge: megaMindItems.length,                     badgeAlert: false },
+    { id: 'tasks',       label: '✅ Tasks',     badge: `${tasksCompleted}/${tasksTotal}`,         badgeAlert: tasksPendingClaim > 0 },
+    { id: 'gazette',     label: '📰 Gazette',   badge: null,                                     badgeAlert: false },
+    { id: 'market',      label: '🧠 Market',    badge: agentsState.agents.filter((a) => a.isRentedByMe).length || null, badgeAlert: false },
+    { id: 'observatory', label: '🔭 Obs',       badge: null,                                     badgeAlert: false },
+    { id: 'archive',     label: '📜 Archive',   badge: null,                                     badgeAlert: false },
+    { id: 'dashboard',   label: '📊 Dash',      badge: null,                                     badgeAlert: false },
   ];
+
+  // ─── Show onboarding if not done ────────────────────────────────────────────
+  if (!onboardingDone && !profile.isLoading) {
+    return (
+      <OnboardingFlow
+        profile={profile}
+        onUpdateUsername={updateUsername}
+        onUpdatePfp={updatePfp}
+        onComplete={() => setOnboardingDone(true)}
+      />
+    );
+  }
 
   return (
     <div className="h-dvh flex flex-col overflow-hidden bg-zinc-950 text-white" style={{ fontFamily: 'var(--font-geist-sans, system-ui, sans-serif)' }}>
@@ -320,7 +334,7 @@ export function MiniApp() {
       <TabBar tabs={tabs} activeTab={activeTab} onSelect={setActiveTab} />
 
       <div className="flex-1 overflow-y-auto min-h-0 bg-zinc-950">
-        {activeTab === 'inventory' && (
+        {activeTab === 'forge' && (
           <InventoryTab searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} filteredInventory={filteredInventory} onAddToCanvas={addToCanvas} />
         )}
         {activeTab === 'megaminds' && (
@@ -336,19 +350,17 @@ export function MiniApp() {
         {activeTab === 'tasks' && (
           <TasksTab dailyTasks={dailyTasks} tasksCompleted={tasksCompleted} tasksTotal={tasksTotal} gmChain={gmChain} evmChains={EVM_CHAINS} gmSent={gmSent} gmSending={gmSending} onSelectGmChain={setGmChain} onSendGm={sendGm} onClaimTask={handleClaimTask} />
         )}
-        {activeTab === 'feed' && (
-          <FeedTab
+        {activeTab === 'gazette' && (
+          <GazetteTab
             feedEvents={feedEvents}
             feedLoading={feedLoading}
             captions={captions}
             leaderboardData={leaderboardData}
-            myRank={typeof myRank === 'number' ? myRank : 99}
-            tierBadge={TIER_BADGE}
             onReactCaption={handleReactCaption}
             onReportCaption={handleReportCaption}
           />
         )}
-        {activeTab === 'agents' && (
+        {activeTab === 'market' && (
           <AgentsTab
             agents={agentsState.agents}
             loading={agentsState.loading}
@@ -356,6 +368,26 @@ export function MiniApp() {
             craftz={craftz}
             onMount={() => void agentsState.fetchAgents(0)}
             onRent={handleRentAgent}
+          />
+        )}
+        {activeTab === 'observatory' && (
+          <ObservatoryTab
+            agents={agentsState.agents}
+            agentsLoading={agentsState.loading}
+            weatherEvent={weatherEvent}
+            weatherSecondsRemaining={weatherSecondsRemaining}
+          />
+        )}
+        {activeTab === 'archive' && (
+          <ArchiveTab inventory={inventory} />
+        )}
+        {activeTab === 'dashboard' && (
+          <DashboardTab
+            agents={agentsState.agents}
+            agentsLoading={agentsState.loading}
+            weatherEvent={weatherEvent}
+            myPoints={myPoints}
+            craftz={craftz}
           />
         )}
         {activeTab === 'admin' && (
@@ -404,11 +436,11 @@ function TabBar({
         <button
           key={tab.id}
           onClick={() => onSelect(tab.id)}
-          className={`flex-1 min-w-[60px] py-2 text-[10px] font-semibold transition-colors flex flex-col items-center justify-center gap-0.5 relative ${activeTab === tab.id ? 'text-white border-b-2 border-amber-400' : 'text-zinc-500 hover:text-zinc-300'}`}
+          className={`flex-1 min-w-[52px] py-2 text-[9.5px] font-semibold transition-colors flex flex-col items-center justify-center gap-0.5 relative ${activeTab === tab.id ? 'text-white border-b-2 border-amber-400' : 'text-zinc-500 hover:text-zinc-300'}`}
         >
           {tab.badgeAlert && <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />}
           <span>{tab.label}</span>
-          {tab.badge !== null && <span className="text-zinc-600 text-[9px]">{tab.badge}</span>}
+          {tab.badge !== null && <span className="text-zinc-600 text-[8px]">{tab.badge}</span>}
         </button>
       ))}
     </div>
@@ -509,12 +541,13 @@ function MintModal({
                   rel="noopener noreferrer"
                   className="text-blue-400 text-[10px] font-mono hover:text-blue-300 break-all underline underline-offset-2"
                 >
-                  {mintModal.txHash.slice(0, 14)}…{mintModal.txHash.slice(-8)} ↗
+                  {mintModal.txHash.slice(0, 20)}…{mintModal.txHash.slice(-8)}
                 </a>
-                <p className="text-zinc-700 text-[9px] mt-1.5">View on Basescan</p>
               </div>
             )}
-            <button onClick={onAdvance} className="w-full py-2.5 rounded-xl bg-zinc-800 text-white text-sm font-semibold hover:bg-zinc-700 transition-colors">Done</button>
+            <button onClick={onAdvance} className="w-full py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-400 transition-colors">
+              Done ✓
+            </button>
           </>
         )}
       </div>

@@ -1,3 +1,4 @@
 - [Emoji refactor](emoji-refactor.md) — AppInventoryItem uses `emoji: string` (not `emojis`); EmojiRenderer type removed; server feed events still use `emojis: string[]` array (OK)
 - [Mint flow phases](mint-flow-phases.md) — MintState phases: prompt→signing→confirming→done; txHash generated client-side via generateTxHash(); stored on AppInventoryItem
 - [Profile stack](profile-stack.md) — useProfile reads Farcaster SDK context → Neynar enrichment via /api/neynar/user?fid=X proxy; falls back to localStorage username + dicebear avatar
+- [CrafterZ Blueprint Implementation](crafterz-blueprint.md) — all 18 blueprint screens across 8 tabs; patterns for extending further.

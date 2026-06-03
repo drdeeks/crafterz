@@ -326,3 +326,18 @@ export async function fetchFeed(limit = 30) {
   );
   return response?.ok ? response.events : [];
 }
+
+export async function submitCaption(captionText: string, username?: string) {
+  const response = await requestJson<{ ok: boolean; caption: ServerCaption }>(
+    "/api/captions",
+    { method: "POST", body: JSON.stringify({ captionText, username }) },
+  );
+  return response?.ok ? response.caption : null;
+}
+
+export async function fetchRecipeHint(itemA: string, itemB: string): Promise<string | null> {
+  const response = await requestJson<{ ok: boolean; hint: string }>(
+    `/api/hint?a=${encodeURIComponent(itemA)}&b=${encodeURIComponent(itemB)}`,
+  );
+  return response?.ok ? response.hint : null;
+}

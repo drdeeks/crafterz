@@ -34,7 +34,17 @@ export type AppDailyTask = Omit<ServerTask, 'updatedAt'> & {
 };
 export type AppDailyTaskType = ServerTask['type'];
 
-export type AppTab = 'inventory' | 'megaminds' | 'tasks' | 'leaderboard' | 'feed' | 'agents' | 'admin';
+export type AppTab =
+  | 'forge'
+  | 'megaminds'
+  | 'tasks'
+  | 'gazette'
+  | 'market'
+  | 'observatory'
+  | 'archive'
+  | 'dashboard'
+  | 'admin';
+
 export type AppMintPhase = 'prompt' | 'signing' | 'confirming' | 'done';
 
 export type EvmChainOption = {

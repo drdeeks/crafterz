@@ -7,6 +7,8 @@ import weatherRouter from "./weather.js";
 import captionsRouter from "./captions.js";
 import feedRouter from "./feed.js";
 import neynarRouter from "./neynar.js";
+import gazetteRouter from "./gazette.js";
+import archiveRouter from "./archive.js";
 
 const router: IRouter = Router();
 
@@ -18,5 +20,7 @@ router.use(weatherRouter);
 router.use(captionsRouter);
 router.use(feedRouter);
 router.use(neynarRouter);
+router.use(gazetteRouter);
+router.use(archiveRouter);
 
 export default router;

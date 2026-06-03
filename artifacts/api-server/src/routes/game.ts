@@ -338,4 +338,40 @@ Respond with ONLY valid JSON: {"name": string, "emoji": string, "tier": "COMMON"
   }
 });
 
+// ─── Recipe Hint ─────────────────────────────────────────────────────────────
+
+const HINT_PAIRS: Record<string, string> = {
+  'fire+water': 'Think about what happens when extremes meet — something in between.',
+  'water+earth': 'Combination of liquid and solid often yields something living.',
+  'fire+earth': 'Heat and matter forge hard things.',
+  'air+water': 'The sky and sea share something in common.',
+  'fire+air': 'A reaction that feeds itself.',
+  'earth+air': 'What covers the ground and moves through the sky together?',
+  'light+shadow': 'Opposites in tension create contrast.',
+  'chaos+fire': 'Uncontrolled heat has a name.',
+  'chaos+water': 'Turbulent waters suggest motion.',
+  'chaos+earth': 'Ground that shakes.',
+  'chaos+air': 'Wild wind.',
+  'chaos+light': 'Flash or spark.',
+  'chaos+shadow': 'Void or darkness.',
+  'light+fire': 'Pure radiant energy.',
+  'shadow+water': 'Dark depths.',
+  'shadow+earth': 'Underground material.',
+};
+
+router.get("/hint", async (req, res) => {
+  try {
+    const a = String(req.query["a"] ?? "").toLowerCase().trim();
+    const b = String(req.query["b"] ?? "").toLowerCase().trim();
+    if (!a || !b) return res.status(400).json({ ok: false, error: "a and b required" });
+
+    const key = [a, b].sort().join('+');
+    const hint = HINT_PAIRS[key] ?? `Combining ${a} and ${b} might reveal something unexpected. Try experimenting with related concepts.`;
+    res.json({ ok: true, hint });
+  } catch (err) {
+    console.error("Hint error:", err);
+    res.status(500).json({ ok: false, error: "Internal server error" });
+  }
+});
+
 export default router;
