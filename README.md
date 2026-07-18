@@ -1,5 +1,7 @@
 # CrafterZ
 
+[![Node.js](https://img.shields.io/badge/Node.js-runtime-339933?logo=node.js&logoColor=white)](package.json) [![React](https://img.shields.io/badge/React-frontend-61dafb?logo=react&logoColor=111111)](artifacts/crafterz/package.json) [![Foundry](https://img.shields.io/badge/Foundry-contracts-f5f5f5?logo=ethereum&logoColor=111111)](contracts/foundry.toml)
+
 A portable, provider-agnostic crafting game where players combine discoveries, recruit AI agents, compete in heists, and collect first-global discoveries as on-chain MegaMind NFTs.
 
 ## Highlights
