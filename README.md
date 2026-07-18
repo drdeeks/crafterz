@@ -1,7 +1,5 @@
 # CrafterZ
 
-[![DrDeeks Project](https://img.shields.io/badge/DrDeeks%20Project-171718?style=flat-square&labelColor=b84d32)](https://github.com/drdeeks)
-
 A portable, provider-agnostic crafting game where players combine discoveries, recruit AI agents, compete in heists, and collect first-global discoveries as on-chain MegaMind NFTs.
 
 ## Highlights
